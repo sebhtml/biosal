@@ -68,6 +68,8 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     int argc;
     char **argv;
 
+    thorium_decision_maker_init(&self->decision_maker);
+
     self->policy = policy;
     self->original_message_count = 0;
     self->real_message_count = 0;
@@ -83,8 +85,12 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
     self->buffer_size_in_bytes = thorium_multiplexer_policy_size_threshold(self->policy);
 
+#ifdef CONFIG_MULTIPLEXER_USE_DECISION_MAKER
     self->timeout_in_nanoseconds = thorium_decision_maker_get_best_timeout(&self->decision_maker,
                     THORIUM_TIMEOUT_NO_VALUE);
+#else
+    self->timeout_in_nanoseconds = self->policy->threshold_time_in_nanoseconds;
+#endif
 
     CORE_DEBUGGER_ASSERT(self->timeout_in_nanoseconds >= 0);
 
@@ -153,8 +159,6 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->last_send_event_count = 0;
     self->last_time = core_timer_get_nanoseconds(&self->timer);
     self->last_update_time = time(NULL);
-
-    thorium_decision_maker_init(&self->decision_maker);
 
     self->degree_of_aggregation_limit = self->policy->degree_of_aggregation_limit;
 }
@@ -290,7 +294,9 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     }
 #endif
 
+#ifdef CONFIG_MULTIPLEXER_USE_DECISION_MAKER
     thorium_message_multiplexer_update_timeout(self);
+#endif
 
     ++self->original_message_count;
 
