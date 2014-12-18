@@ -19,9 +19,10 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#define FORCE_NO 0
-#define FORCE_YES_SIZE 1
-#define FORCE_YES_TIME 1
+#define FORCE_NO            0
+#define FORCE_YES_SIZE      1
+#define FORCE_YES_TIME      2
+#define FORCE_YES_DOA       3
 
 #define FLAG_DISABLED CORE_BITMAP_MAKE_FLAG(0)
 
@@ -421,7 +422,8 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     /*
      * Try to flush. This only flushes something if the buffer is full.
      */
-    thorium_message_multiplexer_flush(self, destination_node, FORCE_NO);
+    thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_DOA);
+    thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_TIME);
 
     /*
      * Verify invariant.
@@ -783,6 +785,8 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     int maximum_size;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
     int destination_node;
+    int elapsed;
+    int message_count;
 
     if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
@@ -813,6 +817,19 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
     if (force == FORCE_NO && current_size < maximum_size) {
         return;
+
+    } else if (force == FORCE_YES_TIME) {
+        elapsed = core_timer_get_nanoseconds(&self->timer) - multiplexed_buffer->timestamp_;
+
+        if (elapsed < self->timeout_in_nanoseconds) {
+            return;
+        }
+    } else if (force == FORCE_YES_DOA) {
+        message_count = multiplexed_buffer->message_count_;
+
+        if (message_count < self->degree_of_aggregation_limit) {
+            return;
+        }
     }
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
