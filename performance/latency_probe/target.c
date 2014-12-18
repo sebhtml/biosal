@@ -1,6 +1,8 @@
 
 #include "target.h"
 
+#include "source.h" /* for LATENCY_PROBE_USE_MULTIPLEXER */
+
 #include <stdio.h>
 
 static void target_init(struct thorium_actor *self);
