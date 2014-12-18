@@ -2,7 +2,7 @@
 
 function run_check() {
     pattern=$1
-    grep -n "$pattern"  * -R|grep -v git|grep -v check.sh
+    grep -n "$pattern"  * -R|grep -v git|grep -v check.sh | grep -v "doc/"
 }
 
 function run_checks() {
@@ -25,8 +25,8 @@ function run_checks() {
     run_check ")  {"
     run_check "}  ("
 
-    grep -n ") {" * -R |grep void|grep biosal_|grep -v check.sh|grep -v if|grep -v while
-    grep -n " "$ * -R
+    grep -n ") {" * -R |grep void|grep biosal_|grep -v check.sh|grep -v if|grep -v while|grep -v "doc/"
+    grep -n " "$ * -R|grep -v "doc/"
     #grep -n " -> " * -R | grep -v printf|grep -v ^log
 }
 
