@@ -10,13 +10,25 @@
 #include <engine/thorium/actor.h>
 #include <engine/thorium/configuration.h>
 
+/*
+ * Multiplexer options.
+ */
+/*
+ * In nanoseconds
+ */
+#define OPTION_TIMEOUT                  "-aggregation-timeout"
+#define THORIUM_MULTIPLEXER_TIMEOUT (1000 * 1000)
+
 #define OPTION_DEGREE_OF_AGGREGATION    "-degree-of-aggregation-limit"
 #define DEFAULT_DEGREE_OF_AGGREGATION   20
+
+#define THORIUM_MULTIPLEXER_BUFFER_SIZE (1024*4)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self,
                 int argc, char **argv)
 {
     int degree_of_aggregation_limit;
+    int timeout;
 
     /*
      * Size threshold.
@@ -33,6 +45,14 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self,
      * There are 1 000 000 000 ns in 1 second.
      */
     self->threshold_time_in_nanoseconds = THORIUM_MULTIPLEXER_TIMEOUT;
+
+    if (core_command_has_argument(argc, argv, OPTION_TIMEOUT)) {
+        timeout = core_command_get_argument_value_int(argc, argv, OPTION_TIMEOUT);
+
+        if (timeout >= 0) {
+            self->threshold_time_in_nanoseconds = timeout;
+        }
+    }
 
     /*
      * -degree_of_aggregation-limit xxx
