@@ -422,8 +422,10 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     /*
      * Try to flush. This only flushes something if the buffer is full.
      */
+    /*
     thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_DOA);
     thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_TIME);
+    */
 
     /*
      * Verify invariant.
@@ -611,7 +613,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     }
 #endif
 
-#if 0
+#if 1
     /*
      * Don't flush anything if the outbound ring is full,
      * which means there is congestion.
@@ -668,7 +670,6 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     }
 
 #endif
-
 
     /*
      * Get the index.
@@ -815,6 +816,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     if (current_size == 0)
         return;
 
+        /*
     if (force == FORCE_NO && current_size < maximum_size) {
         return;
 
@@ -830,6 +832,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
         if (message_count < self->degree_of_aggregation_limit) {
             return;
         }
+        */
     }
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED

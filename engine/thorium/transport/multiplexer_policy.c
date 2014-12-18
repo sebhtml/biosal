@@ -17,12 +17,12 @@
  * In nanoseconds
  */
 #define OPTION_TIMEOUT                  "-aggregation-timeout"
-#define THORIUM_MULTIPLEXER_TIMEOUT (1000 * 1000)
+#define THORIUM_MULTIPLEXER_TIMEOUT (1 * 1000 * 1000)
 
 #define OPTION_DEGREE_OF_AGGREGATION    "-degree-of-aggregation-limit"
 #define DEFAULT_DEGREE_OF_AGGREGATION   20
 
-#define THORIUM_MULTIPLEXER_BUFFER_SIZE (1024*4)
+#define THORIUM_MULTIPLEXER_BUFFER_SIZE (4 * 1024)
 
 void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self,
                 int argc, char **argv)
