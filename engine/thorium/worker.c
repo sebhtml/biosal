@@ -1835,17 +1835,7 @@ void thorium_worker_run(struct thorium_worker *worker)
             thorium_worker_free_message(worker, &other_message);
 
         } else {
-            /*
-             * Otherwise, this is a regular outbound message.
-             */
-            if (!core_fast_ring_push_from_producer(worker->output_outbound_message_ring_multiple,
-                                &other_message)) {
-
-                /*
-                 * Buffer the message locally if the outbound ring is full.
-                 */
-                core_queue_enqueue(&worker->output_outbound_message_queue, &other_message);
-            }
+            thorium_worker_enqueue_outbound_message(worker, &other_message);
         }
     }
 
