@@ -360,7 +360,8 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
 
     worker->last_outbound_message_block_operation = core_timer_get_nanoseconds(&worker->timer);
 
-    thorium_multiplexer_policy_init(&worker->multiplexer_policy);
+    thorium_multiplexer_policy_init(&worker->multiplexer_policy, worker->node->argc,
+                    worker->node->argv);
     thorium_message_multiplexer_init(&worker->multiplexer, node,
                     &worker->multiplexer_policy);
 

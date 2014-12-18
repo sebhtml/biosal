@@ -4,13 +4,20 @@
 #include "message_multiplexer.h"
 
 #include <core/helpers/set_helper.h>
+#include <core/system/command.h>
 
 #include <engine/thorium/node.h>
 #include <engine/thorium/actor.h>
 #include <engine/thorium/configuration.h>
 
-void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
+#define OPTION_DEGREE_OF_AGGREGATION    "-degree-of-aggregation-limit"
+#define DEFAULT_DEGREE_OF_AGGREGATION   20
+
+void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self,
+                int argc, char **argv)
 {
+    int degree_of_aggregation_limit;
+
     /*
      * Size threshold.
      */
@@ -28,9 +35,17 @@ void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self)
     self->threshold_time_in_nanoseconds = THORIUM_MULTIPLEXER_TIMEOUT;
 
     /*
-     * -degree_of_aggregation-limit 20
+     * -degree_of_aggregation-limit xxx
      */
-    self->degree_of_aggregation_limit = 20;
+    self->degree_of_aggregation_limit = DEFAULT_DEGREE_OF_AGGREGATION;
+
+    if (core_command_has_argument(argc, argv, OPTION_DEGREE_OF_AGGREGATION)) {
+        degree_of_aggregation_limit = core_command_get_argument_value_int(argc, argv, OPTION_DEGREE_OF_AGGREGATION);
+
+        if (degree_of_aggregation_limit >= 0) {
+            self->degree_of_aggregation_limit = degree_of_aggregation_limit;
+        }
+    }
 
     core_set_init(&self->actions_to_skip, sizeof(int));
     core_set_init(&self->actions_to_multiplex, sizeof(int));

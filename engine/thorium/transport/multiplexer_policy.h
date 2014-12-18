@@ -26,7 +26,7 @@ struct thorium_multiplexer_policy {
     int minimum_node_count;
 };
 
-void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self);
+void thorium_multiplexer_policy_init(struct thorium_multiplexer_policy *self, int argc, char **argv);
 void thorium_multiplexer_policy_destroy(struct thorium_multiplexer_policy *self);
 
 int thorium_multiplexer_policy_is_action_to_skip(struct thorium_multiplexer_policy *self, int action);
