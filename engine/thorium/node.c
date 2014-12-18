@@ -221,6 +221,13 @@ void thorium_node_tracepoint(struct thorium_node *self, const char *event);
 #define THORIUM_NODE_TRACEPOINT(event)
 #endif
 
+#define OPTION_ACTOR_RATIO  "-actor-ratio"
+#define DEFAULT_ACTOR_RATIO 100
+#define MINIMUM_ACTOR_RATIO 1
+#define MAXIMUM_ACTOR_RATIO 100
+
+void thorium_node_configure_actor_ratio(struct thorium_node *self);
+
 void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 {
     int i;
@@ -616,6 +623,8 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     node->counter_last_sent_byte_count = 0;
 
     node->last_time = 0;
+
+    thorium_node_configure_actor_ratio(node);
 }
 
 void thorium_node_destroy(struct thorium_node *node)
@@ -3301,4 +3310,43 @@ int thorium_node_has_reached_maximum_outbound_throughput(struct thorium_node *se
     maximum = thorium_transport_get_maximum_outbound_throughput(&self->transport);
 
     return current >= (0.95 * maximum);
+}
+
+void thorium_node_configure_actor_ratio(struct thorium_node *self)
+{
+    int new_ratio;
+    int argc;
+    char **argv;
+
+    /*
+     * N: number of nodes
+     * W: number of workers per node
+     * A: number of actors per worker
+     *
+     * Ratio = (W * A) / N
+     *
+     * Example:
+     * N = 4
+     * W = 7
+     * A = 57
+     *
+     * Ratio = (7 * 57) / 4 = 99.75
+     */
+
+    self->actor_count_per_node_to_node_count_ratio_for_multiplexer = DEFAULT_ACTOR_RATIO;
+
+    argc = self->argc;
+    argv = self->argv;
+
+    if (core_command_has_argument(self->argc, self->argv, OPTION_ACTOR_RATIO)) {
+        new_ratio = core_command_get_argument_value_int(argc, argv, OPTION_ACTOR_RATIO);
+
+        if (new_ratio >= MINIMUM_ACTOR_RATIO && new_ratio <= MAXIMUM_ACTOR_RATIO) {
+            self->actor_count_per_node_to_node_count_ratio_for_multiplexer = new_ratio;
+
+            /*
+            printf("ratio %d\n", new_ratio);
+            */
+        }
+    }
 }

@@ -259,6 +259,8 @@ struct thorium_node {
     unsigned int random_seed;
 
     uint64_t last_time;
+
+    int actor_count_per_node_to_node_count_ratio_for_multiplexer;
 };
 
 extern struct thorium_node *thorium_node_global_self;
