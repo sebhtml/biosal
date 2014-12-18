@@ -62,13 +62,15 @@ void biosal_unitig_manager_init(struct thorium_actor *self)
     concrete_self->vertices_with_unitig_flag = 0;
 
 #ifdef CONFIG_UNITIG_USE_MULTIPLEXER
-    concrete_self->visitor_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
-            thorium_actor_get_suggested_actor_count(self,
+    concrete_self->visitor_count_per_worker = thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
 
-    concrete_self->walker_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
-            thorium_actor_get_suggested_actor_count(self,
+    concrete_self->walker_count_per_worker = thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
+
+#else
+    concrete_self->visitor_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
+    concrete_self->walker_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
 #endif
 
     CORE_DEBUGGER_ASSERT(concrete_self->visitor_count_per_worker >= 1);
