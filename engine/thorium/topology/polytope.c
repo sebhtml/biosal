@@ -6,25 +6,33 @@
 
 #include <stdio.h>
 
-int thorium_polytope_get_power(int radix, int diameter);
-
 void thorium_polytope_generate_tuples(struct thorium_polytope *self);
+
+static int *get_load_bucket(struct thorium_polytope *self, int position, int value);
+static void set_load(struct thorium_polytope *self, int position, int value, int load);
+static int get_load(struct thorium_polytope *self, int position, int value);
 
 void thorium_polytope_get_tuple(struct thorium_polytope *self,
         int i, struct thorium_tuple *tuple);
 
+void thorium_polytope_initialize_loads(struct thorium_polytope *self);
+
 void thorium_polytope_init(struct thorium_polytope *self, int size)
 {
     core_vector_init(&self->tuples, sizeof(struct thorium_tuple));
+    core_vector_init(&self->loads, sizeof(int));
     self->size = size;
     self->valid = 0;
 
     thorium_polytope_generate_tuples(self);
+
+    thorium_polytope_initialize_loads(self);
 }
 
 void thorium_polytope_destroy(struct thorium_polytope *self)
 {
     core_vector_destroy(&self->tuples);
+    core_vector_destroy(&self->loads);
 }
 
 int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int source,
@@ -40,6 +48,7 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
     int load;
     int best_load;
     int next;
+    int best_value = -1;
 
 #ifdef VERBOSE_POLYTOPE
     printf("get_next source %d current %d destination %d\n",
@@ -80,9 +89,9 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
             continue;
 
         /*
-         * TODO: store the load.
+         * Store the load.
          */
-        load = 0;
+        load = get_load(self, position_in_tuple, desired_value);
 
         if (best_load == -1 || load > best_load) {
             best_position = position_in_tuple;
@@ -91,7 +100,8 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
     }
 
     next_tuple = *current_tuple;
-    next_tuple.values[best_position] = destination_tuple->values[best_position];
+    best_value = destination_tuple->values[best_position];
+    next_tuple.values[best_position] = best_value;
 
 #ifdef VERBOSE_POLYTOPE
     printf("Route\n");
@@ -103,9 +113,14 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
     printf("...\n");
     printf("destination ");
     thorium_tuple_print(destination_tuple, self->radix, self->diameter);
+
+    printf("best position %d value %d load %d\n",
+                    best_position, best_value, best_load);
 #endif
 
     next = thorium_tuple_get_base10_value(&next_tuple, self->radix, self->diameter);
+
+    set_load(self, best_position, best_value, best_load + 1);
 
     return next;
 }
@@ -177,4 +192,48 @@ void thorium_polytope_get_tuple(struct thorium_polytope *self,
         int i, struct thorium_tuple *tuple)
 {
     thorium_tuple_init(tuple, self->radix, self->diameter, i);
+}
+
+static int get_load(struct thorium_polytope *self, int position, int value)
+{
+    int *bucket;
+    bucket = get_load_bucket(self, position, value);
+    return *bucket;
+}
+
+static void set_load(struct thorium_polytope *self, int position, int value, int load)
+{
+    int *bucket;
+    bucket = get_load_bucket(self, position, value);
+    *bucket = load;
+}
+
+static int *get_load_bucket(struct thorium_polytope *self, int position, int value)
+{
+    int index;
+    int *bucket;
+    index = position * self->radix + value;
+    bucket = core_vector_at(&self->loads, index);
+    return bucket;
+}
+
+void thorium_polytope_initialize_loads(struct thorium_polytope *self)
+{
+    /*
+     * Allocate space for load values.
+     */
+
+    int position;
+    int value;
+
+    if (!self->valid)
+        return;
+
+    core_vector_resize(&self->loads, self->diameter * self->radix);
+
+    for (position = 0; position < self->diameter; ++position) {
+        for (value = 0; value < self->radix; ++value) {
+            set_load(self, position, value, 0);
+        }
+    }
 }

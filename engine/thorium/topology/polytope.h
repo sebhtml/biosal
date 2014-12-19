@@ -8,11 +8,14 @@
 
 struct thorium_polytope {
     struct core_vector tuples;
+    struct core_vector loads;
     int valid;
     int size;
     int radix;
     int diameter;
 };
+
+int thorium_polytope_get_power(int radix, int diameter);
 
 void thorium_polytope_init(struct thorium_polytope *self, int size);
 void thorium_polytope_destroy(struct thorium_polytope *self);
