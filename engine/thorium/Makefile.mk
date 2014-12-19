@@ -36,4 +36,8 @@ THORIUM_OBJECTS += engine/thorium/cache/cache_tag.o
 THORIUM_OBJECTS += engine/thorium/cache/message_cache.o
 THORIUM_OBJECTS += engine/thorium/cache/cache_actor_adapter.o
 
+THORIUM_OBJECTS += engine/thorium/topology/router.o
+THORIUM_OBJECTS += engine/thorium/topology/polytope.o
+THORIUM_OBJECTS += engine/thorium/topology/tuple.o
+
 LIBRARY_OBJECTS += $(THORIUM_OBJECTS)
