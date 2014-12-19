@@ -19,6 +19,9 @@ int main(int argc, char **argv)
     int size = 256;
     int i;
     int j;
+    int count_0_hops;
+    int count_1_hops;
+    int count_2_hops;
 
     thorium_router_init(&router, size, TOPOLOGY_POLYTOPE);
 
@@ -47,6 +50,10 @@ int main(int argc, char **argv)
      * 2 hops since 256 is 16 * 16.
      */
 
+    count_0_hops = 0;
+    count_1_hops = 0;
+    count_2_hops = 0;
+
     for (i = 0; i < size; ++i) {
         for (j = 0; j < size; ++j) {
             current = i;
@@ -60,8 +67,18 @@ int main(int argc, char **argv)
 
             TEST_INT_IS_LOWER_THAN_OR_EQUAL(hops, 2);
             TEST_INT_EQUALS(current, destination);
+
+            if (hops == 0)
+                ++count_0_hops;
+            else if (hops == 1)
+                ++count_1_hops;
+            else if (hops == 2)
+                ++count_2_hops;
         }
     }
+
+    TEST_INT_EQUALS(count_0_hops, size);
+    TEST_INT_EQUALS(size * size, count_0_hops + count_1_hops + count_2_hops);
 
     thorium_router_destroy(&router);
 
