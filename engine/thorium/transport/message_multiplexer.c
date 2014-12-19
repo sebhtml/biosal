@@ -684,13 +684,13 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         multiplexed_buffer = core_vector_at(&self->buffers, index);
         buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
         message_count = multiplexed_buffer->message_count_;
-    
+
         /*
         * Flush only the buffers with a elapsed time that is greater or equal to the
         * timeout.
         */
         time = core_timer_get_nanoseconds(&self->timer);
-    
+
         /*
         * Get the current time. This current time will be compared
         * with the virtual time of each item in the timeline.
@@ -751,9 +751,9 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
         */
         if (!thorium_multiplexed_buffer_has_reached_target(multiplexed_buffer)) {
             thorium_multiplexed_buffer_set_time(multiplexed_buffer, time);
-    
+
             core_red_black_tree_add_key_and_value(&self->timeline, &time, &index);
-    
+
             return;
         }
 #endif

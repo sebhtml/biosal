@@ -16,7 +16,7 @@ void thorium_tuple_init(struct thorium_tuple *self, int radix, int diameter, int
     int result_power_plus_1;
     int result_power;
 
-    for(power = 0; power < diameter; ++power) {
+    for (power = 0; power < diameter; ++power) {
 
         result_power = thorium_polytope_get_power(radix, power);
         result_power_plus_1 = result_power * radix;
