@@ -262,6 +262,11 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->action, sizeof(self->action));
     core_packer_process(&packer, &self->number, sizeof(self->number));
 
+#ifdef THORIUM_MESSAGE_USE_ROUTING
+    core_packer_process(&packer, &self->routing_source, sizeof(self->routing_source));
+    core_packer_process(&packer, &self->routing_destination, sizeof(self->routing_destination));
+#endif
+
 #ifdef THORIUM_MESSAGE_ENABLE_TRACEPOINTS
     core_packer_process(&packer, self->tracepoint_times,
                     THORIUM_MESSAGE_TRACEPOINT_COUNT * sizeof(uint64_t));

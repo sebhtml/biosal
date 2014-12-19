@@ -20,6 +20,8 @@
 
 #define ACTION_INVALID -1
 
+#define THORIUM_MESSAGE_USE_ROUTING
+
 /*
  * Use tracepoints to analyze the life cycle of messages.
  */
@@ -65,7 +67,15 @@
 
 #endif
 
-#define THORIUM_MESSAGE_METADATA_SIZE (4 * sizeof(int) + TRACEPOINT_SIZE)
+/*
+ * - action
+ * - number
+ * - source_actor
+ * - destination_actor
+ * - routing_source
+ * - routing_destination
+ */
+#define THORIUM_MESSAGE_METADATA_SIZE (6 * sizeof(int) + TRACEPOINT_SIZE)
 
 /*
  * This is a message.
