@@ -145,8 +145,6 @@ static int thorium_worker_enqueue_message_for_triage(struct thorium_worker *work
 static int thorium_worker_dequeue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 */
 
-static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
-                struct thorium_message *message);
 static void thorium_worker_send_to_other_node(struct thorium_worker *self,
                 struct thorium_message *message);
 
@@ -2575,28 +2573,57 @@ void thorium_worker_send_local_delivery(struct thorium_worker *self, struct thor
                     message);
 }
 
-static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
+int thorium_worker_send_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message)
 {
     int destination_node;
     struct thorium_worker *worker_for_multiplexer;
+    int routing_source = -1;
+    int current_node = self->node->name;
+    int next_node_in_route;
+    int routing_destination;
 
-    destination_node = thorium_message_destination_node(message);
+    routing_destination = message->routing_destination;
+
+    CORE_DEBUGGER_ASSERT(routing_destination >= 0);
+
+    /*
+     * routing_source -> ... -> current_node -> ...
+     * -> next_node_in_route -> ... -> routing_destination
+     */
+    next_node_in_route = thorium_router_get_next_rank_in_route(&self->multiplexer.router,
+                            routing_source, current_node, routing_destination);
+
+    destination_node = next_node_in_route;
 
     CORE_DEBUGGER_ASSERT(destination_node >= 0);
     CORE_DEBUGGER_ASSERT(destination_node <= self->node->nodes);
 
     worker_for_multiplexer = thorium_node_get_exporter_worker(self->node, destination_node);
 
+    /*
+    printf("delivery path, importer %d exporter %d routing_source %d current_node %d"
+                    " routing_destination %d next_node_in_route %d\n",
+                    self->name, worker_for_multiplexer->name,
+                    message->routing_source, current_node,
+                    routing_destination, next_node_in_route);
+                    */
+
     if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
                             message)) {
 
+            /*
+        printf("Warning, ring is full, buffering exported message (%d in queue)\n",
+                        core_queue_size(&self->output_outbound_message_queue_for_multiplexer));
+                        */
         /*
          * Put it back in the queue if the ring is full already.
          */
         core_queue_enqueue(&self->output_outbound_message_queue_for_multiplexer,
                         message);
     }
+
+    return 1;
 }
 
 static void thorium_worker_send_to_other_node(struct thorium_worker *self,

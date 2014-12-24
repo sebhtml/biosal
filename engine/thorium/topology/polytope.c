@@ -158,9 +158,9 @@ void thorium_polytope_generate_tuples(struct thorium_polytope *self)
     if (!found)
         return;
 
-#ifdef VERBOSE_POLYTOPE
     printf("Found polytope geometry: size %d diameter %d radix %d\n",
                                 size, diameter, radix);
+#ifdef VERBOSE_POLYTOPE
 #endif
 
     self->diameter = diameter;

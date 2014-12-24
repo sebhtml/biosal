@@ -369,4 +369,7 @@ void thorium_worker_set_last_event_counter(struct thorium_worker *self, int even
 int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message);
 
+int thorium_worker_send_for_multiplexer(struct thorium_worker *self,
+                struct thorium_message *message);
+
 #endif

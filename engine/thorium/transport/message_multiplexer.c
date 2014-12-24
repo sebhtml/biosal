@@ -49,8 +49,8 @@
  * Use topology-aware message aggregation.
  */
 /*
-#define CONFIG_USE_TOPOLOGY_AWARE_AGGREGATION
 */
+#define CONFIG_USE_TOPOLOGY_AWARE_AGGREGATION
 
 /*
  * Internal function for flushing stuff away.
@@ -509,8 +509,6 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int current_node;
     int routing_source;
     int routing_destination;
-    int next_node_in_route;
-    struct thorium_worker *worker;
 
 #ifdef DEBUG_MULTIPLEXER
     printf("demultiplex message\n");
@@ -606,10 +604,13 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         routing_destination = new_message.routing_destination;
         routing_source = new_message.routing_source;
 
+        CORE_DEBUGGER_ASSERT(routing_destination >= 0);
+
         /*
          * This is a local delivery, nothing to see here.
          */
         if (routing_destination == current_node) {
+
             thorium_worker_send_local_delivery(self->worker, &new_message);
 
         /*
@@ -617,15 +618,12 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
          * payload there since we can not do anything with it here.
          */
         } else {
-            next_node_in_route = thorium_router_get_next_rank_in_route(&self->router,
-                            routing_source, current_node, routing_destination);
-
-            worker = thorium_node_get_exporter_worker(self->node, next_node_in_route);
 
             /*
              * Export the message to another node.
+             * To do this, use an exporter worker.
              */
-            thorium_worker_enqueue_message_for_multiplexer(worker,
+            thorium_worker_send_for_multiplexer(self->worker,
                             &new_message);
         }
 
