@@ -44,7 +44,12 @@
 #define OPTION_DISABLE_MULTIPLEXER "-disable-multiplexer"
 
 #define MULTIPLEXER_IS_VERBOSE
+
 /*
+ * Use topology-aware message aggregation.
+ */
+/*
+#define CONFIG_USE_TOPOLOGY_AWARE_AGGREGATION
 */
 
 /*
@@ -326,10 +331,13 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
                     next_node_in_route, destination_node);
                     */
 
+#ifdef CONFIG_USE_TOPOLOGY_AWARE_AGGREGATION
     /*
      * The next node in the route for this message is
      * next_node_in_route.
      */
+    destination_node = next_node_in_route;
+#endif
 
     CORE_DEBUGGER_ASSERT(source_node >= 0);
 
@@ -498,6 +506,11 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int tag;
     int source_node;
     int destination_node;
+    int current_node;
+    int routing_source;
+    int routing_destination;
+    int next_node_in_route;
+    struct thorium_worker *worker;
 
 #ifdef DEBUG_MULTIPLEXER
     printf("demultiplex message\n");
@@ -589,7 +602,32 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         thorium_message_print(&new_message);
         */
 
-        thorium_worker_send_local_delivery(self->worker, &new_message);
+        current_node = self->node->name;
+        routing_destination = new_message.routing_destination;
+        routing_source = new_message.routing_source;
+
+        /*
+         * This is a local delivery, nothing to see here.
+         */
+        if (routing_destination == current_node) {
+            thorium_worker_send_local_delivery(self->worker, &new_message);
+
+        /*
+         * Otherwise, get the next node in the route and send the
+         * payload there since we can not do anything with it here.
+         */
+        } else {
+            next_node_in_route = thorium_router_get_next_rank_in_route(&self->router,
+                            routing_source, current_node, routing_destination);
+
+            worker = thorium_node_get_exporter_worker(self->node, next_node_in_route);
+
+            /*
+             * Export the message to another node.
+             */
+            thorium_worker_enqueue_message_for_multiplexer(worker,
+                            &new_message);
+        }
 
         /*
         thorium_message_destroy(&new_message);

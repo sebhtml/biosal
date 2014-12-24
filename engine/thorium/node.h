@@ -72,6 +72,13 @@
 #define THORIUM_NODE_LOAD_PERIOD 10
 
 /*
+ * Route all small messages through the same exporter.
+ */
+/*
+#define ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
+*/
+
+/*
 */
 
 struct thorium_script;
@@ -316,6 +323,8 @@ int thorium_node_must_print_data(struct thorium_node *self);
 
 int thorium_node_has_transport_congestion(struct thorium_node *self);
 
+struct thorium_worker *thorium_node_get_exporter_worker(struct thorium_node *self,
+                int destination_node);
 int thorium_node_has_reached_maximum_outbound_throughput(struct thorium_node *self);
 
 #endif

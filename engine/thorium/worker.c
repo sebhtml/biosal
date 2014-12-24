@@ -124,13 +124,6 @@
 */
 #define CONFIG_USE_OUTBOUND_RING_FOR_CONGESTION_DETECTION
 
-/*
- * Route all small messages through the same exporter.
- */
-/*
-#define ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
-*/
-
 static void thorium_worker_work(struct thorium_worker *self, struct thorium_actor *actor);
 /*
 void thorium_worker_flush_outbound_message_block(struct thorium_worker *self);
@@ -146,9 +139,6 @@ static void thorium_worker_do_backoff(struct thorium_worker *self);
 static int thorium_worker_has_actor(struct thorium_worker *self, int actor);
 
 static int thorium_worker_publish_message(struct thorium_worker *self, struct thorium_message *message);
-
-static int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
-                struct thorium_message *message);
 
 static int thorium_worker_enqueue_message_for_triage(struct thorium_worker *worker, struct thorium_message *message);
 /*
@@ -2506,7 +2496,7 @@ void thorium_worker_flush_outbound_message_block(struct thorium_worker *self)
 }
 #endif
 
-static int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
+int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message)
 {
     return core_fast_ring_push_from_producer(&self->input_message_ring_for_multiplexer,
@@ -2588,7 +2578,6 @@ void thorium_worker_send_local_delivery(struct thorium_worker *self, struct thor
 static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
                 struct thorium_message *message)
 {
-    int worker_index;
     int destination_node;
     struct thorium_worker *worker_for_multiplexer;
 
@@ -2597,13 +2586,7 @@ static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
     CORE_DEBUGGER_ASSERT(destination_node >= 0);
     CORE_DEBUGGER_ASSERT(destination_node <= self->node->nodes);
 
-    worker_index = destination_node % self->worker_count;
-
-#ifdef ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
-    worker_index = 0;
-#endif
-
-    worker_for_multiplexer = self->workers + worker_index;
+    worker_for_multiplexer = thorium_node_get_exporter_worker(self->node, destination_node);
 
     if (!thorium_worker_enqueue_message_for_multiplexer(worker_for_multiplexer,
                             message)) {

@@ -3352,3 +3352,21 @@ void thorium_node_configure_actor_ratio(struct thorium_node *self)
         }
     }
 }
+
+struct thorium_worker *thorium_node_get_exporter_worker(struct thorium_node *self,
+                int destination_node)
+{
+    int worker_index;
+    struct thorium_worker *worker_for_multiplexer;
+
+    worker_index = destination_node % self->worker_count;
+
+#ifdef ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
+    worker_index = 0;
+#endif
+
+    worker_for_multiplexer = thorium_worker_pool_get_worker(&self->worker_pool,
+                    worker_index);
+
+    return worker_for_multiplexer;
+}

@@ -366,6 +366,7 @@ uint64_t thorium_worker_get_event_counter(struct thorium_worker *self, int event
 uint64_t thorium_worker_get_last_event_counter(struct thorium_worker *self, int event);
 void thorium_worker_set_last_event_counter(struct thorium_worker *self, int event);
 
-
+int thorium_worker_enqueue_message_for_multiplexer(struct thorium_worker *self,
+                struct thorium_message *message);
 
 #endif
