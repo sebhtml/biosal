@@ -98,7 +98,9 @@ void thorium_message_print(struct thorium_message *self)
 {
     printf("Message Number %d"
                     " Action 0x%x Count %d Buffer %p SourceActor %d DestinationActor %d"
-                    " SourceNode %d DestinationNode %d Type %d Worker %d\n",
+                    " SourceNode %d DestinationNode %d"
+                    " RoutingSourceNode %d RoutingDestinationNode %d\n"
+                    " Type %d Worker %d",
                     self->number,
                     self->action,
                     self->count,
@@ -107,6 +109,7 @@ void thorium_message_print(struct thorium_message *self)
                     self->destination_actor,
                     self->source_node,
                     self->destination_node,
+                    self->routing_source, self->routing_destination,
                     self->type,
                     self->worker);
 

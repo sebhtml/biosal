@@ -8,6 +8,8 @@ struct thorium_message;
 
 #include "decision_maker.h"
 
+#include <engine/thorium/topology/router.h>
+
 #include <core/structures/vector.h>
 
 #include <core/structures/ordered/red_black_tree.h>
@@ -119,6 +121,12 @@ struct thorium_message_multiplexer {
     uint64_t last_send_event_count;
     uint64_t last_time;
     time_t last_update_time;
+
+    /*
+     * The virtual router used for
+     * aggregation.
+     */
+    struct thorium_router router;
 };
 
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,

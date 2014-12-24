@@ -2759,10 +2759,12 @@ void thorium_node_resolve(struct thorium_node *self, struct thorium_message *mes
     actor = thorium_message_source(message);
     node_name = thorium_node_actor_node(node, actor);
     thorium_message_set_source_node(message, node_name);
+    thorium_message_set_routing_source_node(message, node_name);
 
     actor = thorium_message_destination(message);
     node_name = thorium_node_actor_node(node, actor);
     thorium_message_set_destination_node(message, node_name);
+    thorium_message_set_routing_destination_node(message, node_name);
 }
 
 static int thorium_node_generate_random_name(struct thorium_node *self,

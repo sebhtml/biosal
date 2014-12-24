@@ -2594,6 +2594,9 @@ static void thorium_worker_send_for_multiplexer(struct thorium_worker *self,
 
     destination_node = thorium_message_destination_node(message);
 
+    CORE_DEBUGGER_ASSERT(destination_node >= 0);
+    CORE_DEBUGGER_ASSERT(destination_node <= self->node->nodes);
+
     worker_index = destination_node % self->worker_count;
 
 #ifdef ROUTE_ALL_SMALL_MESSAGES_To_SAME_EXPORTER_WORKER
@@ -2759,4 +2762,14 @@ void thorium_worker_set_last_event_counter(struct thorium_worker *self, int even
 int thorium_worker_has_reached_maximum_outbound_throughput(struct thorium_worker *self)
 {
     return thorium_node_has_reached_maximum_outbound_throughput(self->node);
+}
+
+void thorium_message_set_routing_destination_node(struct thorium_message *self, int destination)
+{
+    self->routing_destination = destination;
+}
+
+void thorium_message_set_routing_source_node(struct thorium_message *self, int source)
+{
+    self->routing_source = source;
 }

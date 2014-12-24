@@ -162,6 +162,9 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     self->last_update_time = time(NULL);
 
     self->degree_of_aggregation_limit = self->policy->degree_of_aggregation_limit;
+
+    thorium_router_init(&self->router, self->node->nodes,
+                    TOPOLOGY_POLYTOPE);
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
@@ -236,6 +239,8 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
 #endif
 
     thorium_decision_maker_destroy(&self->decision_maker);
+
+    thorium_router_destroy(&self->router);
 }
 
 /*
@@ -272,6 +277,9 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     int required_size;
     struct thorium_multiplexed_buffer *real_multiplexed_buffer;
     uint64_t time;
+    int next_node_in_route;
+    int source_node;
+    int current_node;
 
 #ifdef DEBUG_MULTIPLEXER
     printf("multiplex\n");
@@ -304,6 +312,26 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     count = thorium_message_count(message);
 
     destination_node = thorium_message_destination_node(message);
+
+    source_node = message->routing_source;
+    current_node = self->node->name;
+    next_node_in_route = thorium_router_get_next_rank_in_route(&self->router,
+                    source_node, current_node, destination_node);
+
+    /*
+    thorium_message_print(message);
+    printf("router: source_node %d current_node %d next_node_in_route %d"
+                    " destination_node %d\n",
+                    source_node, current_node,
+                    next_node_in_route, destination_node);
+                    */
+
+    /*
+     * The next node in the route for this message is
+     * next_node_in_route.
+     */
+
+    CORE_DEBUGGER_ASSERT(source_node >= 0);
 
     real_multiplexed_buffer = core_vector_at(&self->buffers, destination_node);
 
@@ -525,6 +553,18 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
         thorium_node_prepare_received_message(self->node, &new_message);
 
+        /*
+         * For these demultiplexed messages, there are 2 outcomes:
+         *
+         * 1) the message must be delivered locally;
+         * 2) the message must be forward because this is a middle node in
+         *    the route.
+         */
+        /*
+        printf("demultiplex: \n");
+        thorium_message_print(&new_message);
+        printf("\n");
+*/
         /*
          * Mark the message for recycling.
          */
