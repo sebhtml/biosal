@@ -82,6 +82,35 @@ int main(int argc, char **argv)
 
     thorium_router_destroy(&router);
 
+    /*
+     * Test with 125 nodes.
+     * The code should find (5 * 5 * 5).
+     */
+    {
+        struct thorium_router router;
+        int size = 125;
+        int source = 0;
+        int destination = 124;
+        int hops = 0;
+        int current = source;
+        int next = -1;
+
+        thorium_router_init(&router, size, TOPOLOGY_POLYTOPE);
+
+        while (current != destination && hops < 100) {
+            next = thorium_router_get_next_rank_in_route(&router, source,
+                            current, destination);
+
+            current = next;
+            ++hops;
+        }
+
+        TEST_INT_EQUALS(current, destination);
+        TEST_INT_EQUALS(hops, 3);
+
+        thorium_router_destroy(&router);
+    }
+
     END_TESTS();
 
     return 0;
