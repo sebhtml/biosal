@@ -17,7 +17,7 @@
  * In nanoseconds
  */
 #define OPTION_TIMEOUT                  "-aggregation-timeout"
-#define THORIUM_MULTIPLEXER_TIMEOUT (1 * 1000 * 1000)
+#define THORIUM_MULTIPLEXER_TIMEOUT (200 * 1000)
 
 #define OPTION_DEGREE_OF_AGGREGATION    "-degree-of-aggregation-limit"
 #define DEFAULT_DEGREE_OF_AGGREGATION   20
