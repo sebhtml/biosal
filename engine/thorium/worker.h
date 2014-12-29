@@ -100,6 +100,8 @@ struct thorium_balancer;
 
 #define THORIUM_EVENT_ACTOR_SEND 0
 #define THORIUM_EVENT_ACTOR_RECEIVE 1
+#define THORIUM_EVENT_WORKER_TICK       2
+#define THORIUM_EVENT_COUNT         3
 
 /*
  * A Thorium worker.
@@ -246,8 +248,8 @@ struct thorium_worker {
     int counter_last_original_message_count;
     int counter_last_real_message_count;
 
-    uint64_t event_counters[2];
-    uint64_t last_event_counters[2];
+    uint64_t event_counters[THORIUM_EVENT_COUNT];
+    uint64_t last_event_counters[THORIUM_EVENT_COUNT];
 };
 
 void thorium_worker_init(struct thorium_worker *self, int name, struct thorium_node *node);

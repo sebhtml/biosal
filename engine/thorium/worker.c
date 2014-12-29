@@ -379,9 +379,13 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     worker->counter_last_real_message_count = 0;
 
     worker->event_counters[THORIUM_EVENT_ACTOR_RECEIVE] = 0;
-    worker->event_counters[THORIUM_EVENT_ACTOR_SEND] = 0;
     worker->last_event_counters[THORIUM_EVENT_ACTOR_RECEIVE] = 0;
+
+    worker->event_counters[THORIUM_EVENT_ACTOR_SEND] = 0;
     worker->last_event_counters[THORIUM_EVENT_ACTOR_SEND] = 0;
+
+    worker->event_counters[THORIUM_EVENT_WORKER_TICK] = 0;
+    worker->last_event_counters[THORIUM_EVENT_WORKER_TICK] = 0;
 }
 
 void thorium_worker_destroy(struct thorium_worker *worker)
@@ -719,6 +723,7 @@ void *thorium_worker_main(void *worker1)
         CORE_DEBUGGER_JITTER_DETECTION_END(worker_main_loop, worker->last_elapsed_nanoseconds);
 
         ++worker->tick_count;
+        thorium_worker_increment_event_counter(worker, THORIUM_EVENT_WORKER_TICK);
 
         if (credits == 0) {
             if (!CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEAD))
@@ -2751,23 +2756,28 @@ int thorium_worker_has_no_outbound_traffic(struct thorium_worker *self)
 
 void thorium_worker_increment_event_counter(struct thorium_worker *self, int event)
 {
+    CORE_DEBUGGER_ASSERT(event >= 0 && event < THORIUM_EVENT_COUNT);
+
     ++self->event_counters[event];
 }
 
 uint64_t thorium_worker_get_event_counter(struct thorium_worker *self, int event)
 {
+    CORE_DEBUGGER_ASSERT(event >= 0 && event < THORIUM_EVENT_COUNT);
+
     return self->event_counters[event];
 }
 
 uint64_t thorium_worker_get_last_event_counter(struct thorium_worker *self, int event)
 {
+    CORE_DEBUGGER_ASSERT(event >= 0 && event < THORIUM_EVENT_COUNT);
+
     return self->last_event_counters[event];
 }
 
 void thorium_worker_set_last_event_counter(struct thorium_worker *self, int event)
 {
-    CORE_DEBUGGER_ASSERT(event == THORIUM_EVENT_ACTOR_RECEIVE
-                    || event == THORIUM_EVENT_ACTOR_SEND);
+    CORE_DEBUGGER_ASSERT(event >= 0 && event < THORIUM_EVENT_COUNT);
 
     self->last_event_counters[event] = self->event_counters[event];
 }

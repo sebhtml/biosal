@@ -356,19 +356,25 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     int scheduling_score;
     */
     int node_name;
+
     char *buffer;
     char *buffer_for_wake_up_events;
     char *buffer_for_future_timeline;
     char *buffer_for_traffic_aggregation;
     char *buffer_for_input_throughput;
     char *buffer_for_output_throughput;
+    char *buffer_for_worker_frequency;
+
     int allocated;
+
     int offset;
     int offset_for_wake_up;
     int offset_for_future;
     int offset_for_traffic_reduction;
     int offset_for_input_throughput;
     int offset_for_output_throughput;
+    int offset_for_frequency;
+
     int extra;
     time_t current_time;
     int elapsed;
@@ -381,6 +387,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     float load;
     double input_throughput;
     double output_throughput;
+    double worker_frequency;
     uint64_t nanoseconds;
     uint64_t elapsed_nanoseconds;
 
@@ -415,6 +422,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     buffer_for_traffic_aggregation = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     buffer_for_input_throughput = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
     buffer_for_output_throughput= core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
+    buffer_for_worker_frequency = core_memory_allocate(allocated, MEMORY_WORKER_POOL_KEY);
 
     node_name = thorium_node_name(self->node);
     offset = 0;
@@ -423,6 +431,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     offset_for_traffic_reduction = 0;
     offset_for_input_throughput = 0;
     offset_for_output_throughput = 0;
+    offset_for_frequency = 0;
 
     i = 0;
     sum = 0;
@@ -445,6 +454,11 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         output_throughput -= thorium_worker_get_last_event_counter(worker, THORIUM_EVENT_ACTOR_SEND);
         output_throughput /= (0.0 + elapsed_nanoseconds) / (1000 * 1000 * 1000);
         thorium_worker_set_last_event_counter(worker, THORIUM_EVENT_ACTOR_SEND);
+
+        worker_frequency = thorium_worker_get_event_counter(worker, THORIUM_EVENT_WORKER_TICK);
+        worker_frequency -= thorium_worker_get_last_event_counter(worker, THORIUM_EVENT_WORKER_TICK);
+        worker_frequency /= (0.0 + elapsed_nanoseconds) / (1000 * 1000 * 1000);
+        thorium_worker_set_last_event_counter(worker, THORIUM_EVENT_WORKER_TICK);
 
         selected_load = epoch_load;
         selected_wake_up_count = epoch_wake_up_count;
@@ -480,6 +494,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         offset_for_output_throughput += sprintf(buffer_for_output_throughput + offset_for_output_throughput,
                         " %.2f", output_throughput);
 
+        offset_for_frequency += sprintf(buffer_for_worker_frequency + offset_for_frequency,
+                        " %.2f", worker_frequency);
+
         sum += selected_load;
 
         ++i;
@@ -503,6 +520,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
         thorium_printf("[thorium] node %d OUTPUT_MPS %d s%s\n",
                     node_name, elapsed,
                     buffer_for_output_throughput);
+
+        thorium_printf("[thorium] node %d HZ %d s%s\n",
+                        node_name, elapsed, buffer_for_worker_frequency);
     }
 
 #ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
@@ -524,6 +544,7 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     core_memory_free(buffer_for_traffic_aggregation, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_input_throughput, MEMORY_WORKER_POOL_KEY);
     core_memory_free(buffer_for_output_throughput, MEMORY_WORKER_POOL_KEY);
+    core_memory_free(buffer_for_worker_frequency, MEMORY_WORKER_POOL_KEY);
 }
 
 void thorium_worker_pool_toggle_debug_mode(struct thorium_worker_pool *self)
