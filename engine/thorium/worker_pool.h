@@ -74,6 +74,8 @@ struct thorium_worker_pool {
     int worker_for_triage;
 
     int worker_for_demultiplex;
+
+    uint64_t last_thorium_report_time;
 };
 
 #define THORIUM_WORKER_POOL_LOAD_LOOP 0

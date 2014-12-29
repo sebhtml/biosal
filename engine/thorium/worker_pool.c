@@ -167,6 +167,8 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
     pool->balance_period = THORIUM_SCHEDULER_PERIOD_IN_SECONDS;
 
     pool->worker_for_demultiplex = 0;
+
+    pool->last_thorium_report_time = core_timer_get_nanoseconds(&pool->timer);
 }
 
 void thorium_worker_pool_destroy(struct thorium_worker_pool *pool)
@@ -379,6 +381,8 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     float load;
     double input_throughput;
     double output_throughput;
+    uint64_t nanoseconds;
+    uint64_t elapsed_nanoseconds;
 
     description = NULL;
 
@@ -395,6 +399,10 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     if (elapsed == 0)
         return;
+
+    nanoseconds = core_timer_get_nanoseconds(&self->timer);
+    elapsed_nanoseconds = nanoseconds - self->last_thorium_report_time;
+    self->last_thorium_report_time = nanoseconds;
 
     extra = 100;
 
@@ -430,12 +438,12 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
         input_throughput = thorium_worker_get_event_counter(worker, THORIUM_EVENT_ACTOR_RECEIVE);
         input_throughput -= thorium_worker_get_last_event_counter(worker, THORIUM_EVENT_ACTOR_RECEIVE);
-        input_throughput /= elapsed;
+        input_throughput /= (0.0 + elapsed_nanoseconds) / (1000 * 1000 * 1000);
         thorium_worker_set_last_event_counter(worker, THORIUM_EVENT_ACTOR_RECEIVE);
 
         output_throughput = thorium_worker_get_event_counter(worker, THORIUM_EVENT_ACTOR_SEND);
         output_throughput -= thorium_worker_get_last_event_counter(worker, THORIUM_EVENT_ACTOR_SEND);
-        output_throughput /= elapsed;
+        output_throughput /= (0.0 + elapsed_nanoseconds) / (1000 * 1000 * 1000);
         thorium_worker_set_last_event_counter(worker, THORIUM_EVENT_ACTOR_SEND);
 
         selected_load = epoch_load;

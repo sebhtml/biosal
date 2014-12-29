@@ -2766,6 +2766,9 @@ uint64_t thorium_worker_get_last_event_counter(struct thorium_worker *self, int 
 
 void thorium_worker_set_last_event_counter(struct thorium_worker *self, int event)
 {
+    CORE_DEBUGGER_ASSERT(event == THORIUM_EVENT_ACTOR_RECEIVE
+                    || event == THORIUM_EVENT_ACTOR_SEND);
+
     self->last_event_counters[event] = self->event_counters[event];
 }
 
