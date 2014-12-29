@@ -15,6 +15,8 @@
 
 #include "worker_buffer.h"
 
+#include "thorium_engine.h"
+
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
 #include <core/structures/vector_iterator.h>
@@ -291,7 +293,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     CORE_BITMAP_CLEAR_FLAG(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
 
     /*
-    printf("Booting node\n");
+    thorium_printf("Booting node\n");
     */
     /* register signal handlers
      */
@@ -423,7 +425,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
             if (strcmp(required_threads, "all") == 0) {
                 node->threads = sysconf(_SC_NPROCESSORS_ONLN);
 #ifdef THORIUM_NODE_DEBUG
-                printf("DEBUG using all threads: %d\n", node->threads);
+                thorium_printf("DEBUG using all threads: %d\n", node->threads);
 #endif
                 continue;
             }
@@ -437,7 +439,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
                 node->threads = detected;
 
 #ifdef THORIUM_NODE_DEBUG
-                printf("DEBUG %s node %d : %d threads\n", required_threads,
+                thorium_printf("DEBUG %s node %d : %d threads\n", required_threads,
                                 node_name, detected);
 #endif
 
@@ -449,7 +451,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
             node->threads = atoi(required_threads);
 
 #ifdef THORIUM_NODE_DEBUG
-            printf("DEBUG using %d threads\n", node->threads);
+            thorium_printf("DEBUG using %d threads\n", node->threads);
 #endif
         }
     }
@@ -505,7 +507,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     if (node->threads >= 3) {
 
 #ifdef THORIUM_NODE_DEBUG
-        printf("DEBUG= threads: %i\n", node->threads);
+        thorium_printf("DEBUG= threads: %i\n", node->threads);
 #endif
         if (node->provided == THORIUM_THREAD_MULTIPLE) {
             CORE_BITMAP_SET_FLAG(node->flags, FLAG_SEND_IN_THREAD);
@@ -516,14 +518,14 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
         } else {
 
 #ifdef THORIUM_NODE_DEBUG
-            printf("DEBUG= THORIUM_THREAD_MULTIPLE was not provided...\n");
+            thorium_printf("DEBUG= THORIUM_THREAD_MULTIPLE was not provided...\n");
 #endif
             workers = node->threads - 1;
         }
     }
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
+    thorium_printf("DEBUG threads: %i workers: %i send_in_thread: %i\n",
                     node->threads, workers,
                     CORE_BITMAP_GET_FLAG(node->flags, FLAG_SEND_IN_THREAD));
 #endif
@@ -574,7 +576,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     core_set_affinity(processor);
 
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)) {
-        printf("[thorium] node %d booted successfully (%d nodes), thread count: %d, worker thread count: %d, pacing thread count: %d\n",
+        thorium_printf("[thorium] node %d booted successfully (%d nodes), thread count: %d, worker thread count: %d, pacing thread count: %d\n",
                     node->name,
             node->nodes,
             node->threads,
@@ -599,7 +601,7 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
 
     if (core_command_has_argument(node->argc, node->argv, "-enable-transport-profiler")) {
 
-        printf("Enable transport profiler\n");
+        thorium_printf("Enable transport profiler\n");
 
         CORE_BITMAP_SET_FLAG(node->flags, FLAG_PROFILE_MESSAGE_TRANSPORT);
     }
@@ -607,13 +609,13 @@ void thorium_node_init(struct thorium_node *node, int *argc, char ***argv)
     if (node->name == 0
                     && thorium_node_must_print_data(node)) {
 
-        printf("[thorium] thorium_node sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
-        printf("[thorium] sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
+        thorium_printf("[thorium] thorium_node sizeof(struct thorium_actor) -> %d\n", (int)sizeof(struct thorium_actor));
+        thorium_printf("[thorium] sizeof(struct thorium_message) -> %d\n", (int)sizeof(struct thorium_message));
 
 #ifdef CONFIG_DEBUG
-        printf("[thorium] thorium_node CONFIG_DEBUG= yes\n");
+        thorium_printf("[thorium] thorium_node CONFIG_DEBUG= yes\n");
 #else
-        printf("[thorium] thorium_node CONFIG_DEBUG= no\n");
+        thorium_printf("[thorium] thorium_node CONFIG_DEBUG= no\n");
 #endif
     }
 
@@ -654,10 +656,10 @@ void thorium_node_destroy(struct thorium_node *node)
 #ifdef THORIUM_NODE_DEBUG_INJECTION
     active_requests = thorium_transport_get_active_request_count(&node->transport);
 
-    printf("THORIUM DEBUG output_clean_outbound_buffer_queue has %d items\n",
+    thorium_printf("THORIUM DEBUG output_clean_outbound_buffer_queue has %d items\n",
           core_queue_size(&node->output_clean_outbound_buffer_queue));
 
-    printf("node/%d \n"
+    thorium_printf("node/%d \n"
              "   counter_allocated_node_inbound_buffers %d\n"
              "   counter_freed_injected_node_inbound_buffers %d\n"
              "   counter_freed_thorium_outbound_buffers %d\n"
@@ -781,13 +783,13 @@ void thorium_node_set_supervisor(struct thorium_node *node, int name, int superv
     }
 
 #ifdef THORIUM_NODE_DEBUG_SUPERVISOR
-    printf("DEBUG thorium_node_set_supervisor %d %d\n", name, supervisor);
+    thorium_printf("DEBUG thorium_node_set_supervisor %d %d\n", name, supervisor);
 #endif
 
     actor = thorium_node_get_actor_from_name(node, name);
 
 #ifdef THORIUM_NODE_DEBUG_SUPERVISOR
-    printf("DEBUG set supervisor %d %d %p\n", name, supervisor, (void *)actor);
+    thorium_printf("DEBUG set supervisor %d %d %p\n", name, supervisor, (void *)actor);
 #endif
 
     thorium_actor_set_supervisor(actor, supervisor);
@@ -863,7 +865,7 @@ int thorium_node_spawn(struct thorium_node *node, int script)
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN_KILL
-    printf("DEBUG node/%d thorium_node_spawn actor/%d script/%x\n",
+    thorium_printf("DEBUG node/%d thorium_node_spawn actor/%d script/%x\n",
                     thorium_node_name(node),
                     name, script);
 #endif
@@ -893,12 +895,12 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     /* can not spawn any more actor
      */
     if (core_vector_size(&node->actors) == core_vector_capacity(&node->actors)) {
-        printf("Error: can not spawn more actors, capacity was reached...\n");
+        thorium_printf("Error: can not spawn more actors, capacity was reached...\n");
         return THORIUM_ACTOR_NOBODY;
     }
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG thorium_node_spawn_state\n");
+    thorium_printf("DEBUG thorium_node_spawn_state\n");
 #endif
 
     /* add an actor in the vector of actors
@@ -928,7 +930,7 @@ int thorium_node_spawn_state(struct thorium_node *node, void *state,
     core_memory_fence();
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
-    printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
+    thorium_printf("DEBUG added Actor %d, index is %d, bucket: %p\n", name, index,
                     (void *)bucket);
 #endif
 
@@ -945,7 +947,7 @@ static int thorium_node_allocate_actor_index(struct thorium_node *node)
     if (core_queue_dequeue(&node->dead_indices, &index)) {
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
-        printf("DEBUG node/%d thorium_node_allocate_actor_index using an old index %d, size %d\n",
+        thorium_printf("DEBUG node/%d thorium_node_allocate_actor_index using an old index %d, size %d\n",
                         thorium_node_name(node),
                         index, core_vector_size(&node->actors));
 #endif
@@ -971,7 +973,7 @@ static int thorium_node_generate_name(struct thorium_node *node)
     int nodes;
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG thorium_node_generate_name\n");
+    thorium_printf("DEBUG thorium_node_generate_name\n");
 #endif
 
 #ifdef THORIUM_NODE_SIMPLE_INITIAL_ACTOR_NAMES
@@ -990,7 +992,7 @@ static int thorium_node_generate_name(struct thorium_node *node)
     maximum_value = 2000000000;
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG assigning name\n");
+    thorium_printf("DEBUG assigning name\n");
 #endif
 
     nodes = thorium_node_nodes(node);
@@ -1017,7 +1019,7 @@ static int thorium_node_generate_name(struct thorium_node *node)
     }
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
-    printf("DEBUG node %d assigned name %d\n", node->name, name);
+    thorium_printf("DEBUG node %d assigned name %d\n", node->name, name);
 #endif
 
     /*return node->name + node->nodes * thorium_node_actors(node);*/
@@ -1033,7 +1035,7 @@ static void thorium_node_set_initial_actor(struct thorium_node *node, int node_n
     *bucket = actor;
 
 #ifdef THORIUM_NODE_DEBUG_INITIAL_ACTORS
-    printf("DEBUG thorium_node_set_initial_actor node %d actor %d, %d actors\n",
+    thorium_printf("DEBUG thorium_node_set_initial_actor node %d actor %d, %d actors\n",
                     node_name, actor, core_vector_size(&node->initial_actors));
 #endif
 }
@@ -1046,8 +1048,8 @@ int thorium_node_run(struct thorium_node *node)
 
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_COUNTERS)) {
 
-        printf("----------------------------------------------\n");
-        printf("biosal> node/%d: %d threads, %d workers\n", thorium_node_name(node),
+        thorium_printf("----------------------------------------------\n");
+        thorium_printf("biosal> node/%d: %d threads, %d workers\n", thorium_node_name(node),
                     thorium_node_thread_count(node),
                     thorium_node_worker_count(node));
     }
@@ -1056,7 +1058,7 @@ int thorium_node_run(struct thorium_node *node)
 
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_WORKERS_IN_THREADS)) {
 #ifdef THORIUM_NODE_DEBUG_RUN
-        printf("THORIUM_NODE_DEBUG_RUN DEBUG starting %i worker threads\n",
+        thorium_printf("THORIUM_NODE_DEBUG_RUN DEBUG starting %i worker threads\n",
                         thorium_worker_pool_worker_count(&node->worker_pool));
 #endif
         thorium_worker_pool_start(&node->worker_pool);
@@ -1065,19 +1067,19 @@ int thorium_node_run(struct thorium_node *node)
 
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_SEND_IN_THREAD)) {
 #ifdef THORIUM_NODE_DEBUG_RUN
-        printf("THORIUM_NODE_DEBUG_RUN starting send thread\n");
+        thorium_printf("THORIUM_NODE_DEBUG_RUN starting send thread\n");
 #endif
         thorium_node_start_send_thread(node);
     }
 
 #ifdef THORIUM_NODE_DEBUG_RUN
-    printf("THORIUM_NODE_DEBUG_RUN entering loop in thorium_node_run\n");
+    thorium_printf("THORIUM_NODE_DEBUG_RUN entering loop in thorium_node_run\n");
 #endif
 
     thorium_node_run_loop(node);
 
 #ifdef THORIUM_NODE_DEBUG_RUN
-    printf("THORIUM_NODE_DEBUG_RUN after loop in thorium_node_run\n");
+    thorium_printf("THORIUM_NODE_DEBUG_RUN after loop in thorium_node_run\n");
 #endif
 
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_WORKERS_IN_THREADS)) {
@@ -1100,7 +1102,7 @@ int thorium_node_run(struct thorium_node *node)
 #ifdef THORIUM_NODE_USE_COUNTERS
         thorium_node_print_counters(node);
 #else
-        printf("thorium_node: please recompile with THORIUM_NODE_USE_COUNTERS\n");
+        thorium_printf("thorium_node: please recompile with THORIUM_NODE_USE_COUNTERS\n");
 #endif
     }
 
@@ -1128,7 +1130,7 @@ int thorium_node_run(struct thorium_node *node)
 
         load = thorium_worker_pool_get_computation_load(&node->worker_pool);
 
-        printf("[thorium] node %d COMPUTATION LOAD %.2f\n",
+        thorium_printf("[thorium] node %d COMPUTATION LOAD %.2f\n",
                     thorium_node_name(node),
                     load);
     }
@@ -1151,7 +1153,7 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
     bytes = core_vector_pack_size(&node->initial_actors);
 
 #ifdef THORIUM_NODE_DEBUG_INITIAL_ACTORS
-    printf("DEBUG packing %d initial actors\n",
+    thorium_printf("DEBUG packing %d initial actors\n",
                     core_vector_size(&node->initial_actors));
 #endif
 
@@ -1195,7 +1197,7 @@ static int thorium_node_running(struct thorium_node *node)
     if (node->alive_actors > 0) {
 
 #ifdef THORIUM_NODE_DEBUG_RUN
-        printf("THORIUM_NODE_DEBUG_RUN alive workers > 0\n");
+        thorium_printf("THORIUM_NODE_DEBUG_RUN alive workers > 0\n");
 #endif
         return 1;
     }
@@ -1207,7 +1209,7 @@ static int thorium_node_running(struct thorium_node *node)
     if (active_requests > 0) {
 
             /*
-        printf("ACTIVE %d\n", active_requests);
+        thorium_printf("ACTIVE %d\n", active_requests);
         */
 
         return 1;
@@ -1229,7 +1231,7 @@ static int thorium_node_running(struct thorium_node *node)
     if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_USE_TRANSPORT)
                     && elapsed < 4) {
 #ifdef THORIUM_NODE_DEBUG_RUN
-        printf("THORIUM_NODE_DEBUG_RUN a message was received in the last period %d %d\n",
+        thorium_printf("THORIUM_NODE_DEBUG_RUN a message was received in the last period %d %d\n",
                         (int)current_time, (int)node->last_transport_event_time);
 #endif
         return 1;
@@ -1272,7 +1274,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
     int count;
 
-    printf("DEBUG thorium_node_receive_system\n");
+    thorium_printf("DEBUG thorium_node_receive_system\n");
 #endif
 
     tag = thorium_message_action(message);
@@ -1280,7 +1282,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
     if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR received\n");
+        thorium_printf("DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR received\n");
 #endif
 
         source = thorium_message_source(message);
@@ -1294,7 +1296,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
         if (node->received_initial_actors == nodes) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-            printf("DEBUG send ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR to all nodes\n");
+            thorium_printf("DEBUG send ACTION_THORIUM_NODE_ADD_INITIAL_ACTOR to all nodes\n");
 #endif
 
             bytes = core_vector_pack_size(&node->initial_actors);
@@ -1320,7 +1322,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
     } else if (tag == ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS) {
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS received\n");
+        thorium_printf("DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS received\n");
 #endif
 
         buffer = thorium_message_buffer(message);
@@ -1332,7 +1334,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
         count = thorium_message_count(message);
-        printf("DEBUG buffer size: %d, unpacked %d actor names from node/%d\n",
+        thorium_printf("DEBUG buffer size: %d, unpacked %d actor names from node/%d\n",
                         count, core_vector_size(&node->initial_actors),
                         source);
 #endif
@@ -1348,7 +1350,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
         source = thorium_message_source_node(message);
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("node/%d DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY received from"
+        thorium_printf("node/%d DEBUG ACTION_THORIUM_NODE_ADD_INITIAL_ACTORS_REPLY received from"
                         " %d, %d/%d ready\n", thorium_node_name(node),
                         source, node->ready, nodes);
 #endif
@@ -1371,7 +1373,7 @@ static int thorium_node_receive_system(struct thorium_node *node, struct thorium
         }
 
 #ifdef THORIUM_NODE_DEBUG_RECEIVE_SYSTEM
-        printf("DEBUG node %d starts its initial actor\n",
+        thorium_printf("DEBUG node %d starts its initial actor\n",
                         thorium_node_name(node));
 #endif
 
@@ -1428,7 +1430,7 @@ void thorium_node_send_to_node(struct thorium_node *node, int destination,
     thorium_message_write_metadata(&new_message);
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG thorium_node_send_to_node %d\n", destination);
+    thorium_printf("DEBUG thorium_node_send_to_node %d\n", destination);
 #endif
 
     /*
@@ -1530,7 +1532,7 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_action(message) == 1100) {
-            printf("DEBUG local message 1100\n");
+            thorium_printf("DEBUG local message 1100\n");
         }
 #endif
 
@@ -1561,7 +1563,7 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
 
 #ifdef DEBUG_MULTIPLEXER
         if (thorium_message_action(message) == ACTION_MULTIPLEXER_MESSAGE) {
-            printf("DEBUG-594 thorium_node_send\n");
+            thorium_printf("DEBUG-594 thorium_node_send\n");
             thorium_message_print(message);
         }
 #endif
@@ -1584,7 +1586,7 @@ static void thorium_node_send(struct thorium_node *node, struct thorium_message 
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
         if (thorium_message_action(message) == 1100) {
-            printf("DEBUG outbound message 1100\n");
+            thorium_printf("DEBUG outbound message 1100\n");
 
             CORE_BITMAP_SET_FLAG(node->flags, FLAG_DEBUG);
         }
@@ -1601,7 +1603,7 @@ struct thorium_actor *thorium_node_get_actor_from_name(struct thorium_node *node
     int index;
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG thorium_node_get_actor_from_name %d\n", name);
+    thorium_printf("DEBUG thorium_node_get_actor_from_name %d\n", name);
 #endif
 
     if (name < 0) {
@@ -1691,7 +1693,7 @@ static void thorium_node_inject_message_in_worker_pool(struct thorium_node *node
     source = thorium_message_source(message);
     tag = thorium_message_action(message);
 
-    printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
+    thorium_printf("[DEBUG %s %s %i] actor%i (node%i) : actor%i (node%i)"
                     "(tag %i) %i bytes\n",
                     __FILE__, __func__, __LINE__,
                    source, thorium_message_source_node(message),
@@ -1704,7 +1706,7 @@ static void thorium_node_inject_message_in_worker_pool(struct thorium_node *node
     if (actor == NULL) {
 
 #ifdef THORIUM_NODE_DEBUG_NULL_ACTOR
-        printf("DEBUG node/%d: actor/%d does not exist\n", node->name,
+        thorium_printf("DEBUG node/%d: actor/%d does not exist\n", node->name,
                         name);
 #endif
 
@@ -1716,7 +1718,7 @@ static void thorium_node_inject_message_in_worker_pool(struct thorium_node *node
 
     if (dead) {
 #ifdef THORIUM_NODE_DEBUG_NULL_ACTOR
-        printf("DEBUG node/%d: actor/%d is dead\n", node->name,
+        thorium_printf("DEBUG node/%d: actor/%d is dead\n", node->name,
                         name);
 #endif
         thorium_node_recycle_message(node, message);
@@ -1725,7 +1727,7 @@ static void thorium_node_inject_message_in_worker_pool(struct thorium_node *node
 #endif
 
 #if 0
-    printf("DEBUG node enqueue message\n");
+    thorium_printf("DEBUG node enqueue message\n");
 #endif
     thorium_worker_pool_enqueue_message(&node->worker_pool, message);
 
@@ -1738,14 +1740,14 @@ static int thorium_node_actor_index(struct thorium_node *node, int name)
     int index;
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG calling core_map with pointer to %d, entries %d\n",
+    thorium_printf("DEBUG calling core_map with pointer to %d, entries %d\n",
                     name, (int)core_map_table_size(&node->actor_names));
 #endif
 
     bucket = core_map_get(&node->actor_names, &name);
 
 #ifdef THORIUM_NODE_DEBUG
-    printf("DEBUG thorium_node_actor_index %d %p\n", name, (void *)bucket);
+    thorium_printf("DEBUG thorium_node_actor_index %d %p\n", name, (void *)bucket);
 #endif
 
     if (bucket == NULL) {
@@ -1795,7 +1797,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     name = thorium_actor_name(actor);
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN_KILL
-    printf("DEBUG thorium_node_notify_death node/%d actor/%d script/%x\n",
+    thorium_printf("DEBUG thorium_node_notify_death node/%d actor/%d script/%x\n",
                     thorium_node_name(node),
                     name,
                     thorium_actor_script(actor));
@@ -1805,7 +1807,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     index = thorium_node_actor_index(node, name);
 
 #ifdef THORIUM_NODE_DEBUG_SPAWN
-    printf("DEBUG node/%d THORIUM_NODE_REUSE_DEAD_INDICES push index %d\n",
+    thorium_printf("DEBUG node/%d THORIUM_NODE_REUSE_DEAD_INDICES push index %d\n",
                    thorium_node_name(node), index);
 #endif
 
@@ -1814,11 +1816,11 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     state = thorium_actor_concrete_actor(actor);
 
 #ifdef THORIUM_NODE_DEBUG_ACTOR_COUNTERS
-    printf("----------------------------------------------\n");
-    printf("Counters for actor/%d\n",
+    thorium_printf("----------------------------------------------\n");
+    thorium_printf("Counters for actor/%d\n",
                     name);
     core_counter_print(thorium_actor_counter(actor));
-    printf("----------------------------------------------\n");
+    thorium_printf("----------------------------------------------\n");
 #endif
 
     /*
@@ -1854,7 +1856,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-    printf("DEBUG thorium_node_notify_death\n");
+    thorium_printf("DEBUG thorium_node_notify_death\n");
 #endif
 
     /* Remove the actor from the list of auto-scaling
@@ -1881,7 +1883,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     if (node->alive_actors == 0
                     && CORE_BITMAP_GET_FLAG(node->flags, FLAG_PRINT_THORIUM_DATA)) {
 
-        printf("[thorium] node %d, all local actors are dead now, %d alive actors, %d dead actors\n",
+        thorium_printf("[thorium] node %d, all local actors are dead now, %d alive actors, %d dead actors\n",
                         node->name,
                         node->alive_actors, node->dead_actors);
     }
@@ -1893,7 +1895,7 @@ void thorium_node_notify_death(struct thorium_node *node, struct thorium_actor *
     core_spinlock_unlock(&node->spawn_and_death_lock);
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-    printf("DEBUG exiting thorium_node_notify_death\n");
+    thorium_printf("DEBUG exiting thorium_node_notify_death\n");
 #endif
 }
 
@@ -1934,7 +1936,7 @@ void thorium_node_add_script(struct thorium_node *node, int name,
     }
 
 #ifdef THORIUM_NODE_DEBUG_SCRIPT_SYSTEM
-    printf("DEBUG added script %x %p\n", name, (void *)script);
+    thorium_printf("DEBUG added script %x %p\n", name, (void *)script);
 #endif
 
     core_spinlock_unlock(&node->script_lock);
@@ -1964,8 +1966,8 @@ struct thorium_script *thorium_node_find_script(struct thorium_node *node, int i
 #ifdef THORIUM_NODE_USE_COUNTERS
 void thorium_node_print_counters(struct thorium_node *node)
 {
-    printf("----------------------------------------------\n");
-    printf("thorium_node: counters for node/%d\n",
+    thorium_printf("----------------------------------------------\n");
+    thorium_printf("thorium_node: counters for node/%d\n",
                     thorium_node_name(node));
     core_counter_print(&node->counter, thorium_node_name(node));
 }
@@ -1986,13 +1988,13 @@ static void thorium_node_handle_signal(int signal)
     node = thorium_node_name(self);
 
     if (signal == SIGSEGV) {
-        printf("Error, node/%d received signal SIGSEGV\n", node);
+        thorium_printf("Error, node/%d received signal SIGSEGV\n", node);
 
     } else if (signal == SIGUSR1) {
         thorium_node_toggle_debug_mode(thorium_node_global_self);
         return;
     } else {
-        printf("Error, node/%d received signal %d\n", node, signal);
+        thorium_printf("Error, node/%d received signal %d\n", node, signal);
     }
 
     /*
@@ -2113,7 +2115,7 @@ static void thorium_node_print_structure(struct thorium_node *node, struct thori
 
     structure = thorium_actor_get_received_messages(actor);
 
-    printf("    a%d [label=\"%s/%d\", color=\"%s\"]; /* STRUCTURE vertex */\n", name,
+    thorium_printf("    a%d [label=\"%s/%d\", color=\"%s\"]; /* STRUCTURE vertex */\n", name,
                     thorium_script_description(actual_script), name, color);
 
     core_map_iterator_init(&iterator, structure);
@@ -2121,10 +2123,10 @@ static void thorium_node_print_structure(struct thorium_node *node, struct thori
     while (core_map_iterator_has_next(&iterator)) {
         core_map_iterator_next(&iterator, (void **)&source, (void **)&count);
 
-        printf("    a%d -> a%d [label=\"%d\"]; /* STRUCTURE edge */\n", *source, name, *count);
+        thorium_printf("    a%d -> a%d [label=\"%d\"]; /* STRUCTURE edge */\n", *source, name, *count);
     }
 
-    printf(" /* STRUCTURE */\n");
+    thorium_printf(" /* STRUCTURE */\n");
 
     core_map_iterator_destroy(&iterator);
 }
@@ -2187,7 +2189,7 @@ static int thorium_node_send_system(struct thorium_node *node, struct thorium_me
     if (source == destination
             && tag == ACTION_ENABLE_AUTO_SCALING) {
 
-        printf("AUTO-SCALING node/%d enables auto-scaling for actor %d (ACTION_ENABLE_AUTO_SCALING)\n",
+        thorium_printf("AUTO-SCALING node/%d enables auto-scaling for actor %d (ACTION_ENABLE_AUTO_SCALING)\n",
                        thorium_node_name(node),
                        source);
 
@@ -2327,7 +2329,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_DEBUG_LOOP1
         if (CORE_BITMAP_GET_FLAG(node->flags, FLAG_DEBUG)) {
-            printf("DEBUG node/%d is running\n", thorium_node_name(node));
+            thorium_printf("DEBUG node/%d is running\n", thorium_node_name(node));
         }
 #endif
 
@@ -2369,7 +2371,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_DEBUG_RUN
             if (node->alive_actors == 0) {
-                printf("THORIUM_NODE_DEBUG_RUN sending messages, no local actors\n");
+                thorium_printf("THORIUM_NODE_DEBUG_RUN sending messages, no local actors\n");
             }
 #endif
             thorium_node_send_messages(node);
@@ -2401,7 +2403,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
             if (thorium_node_running(node)) {
                 credits = starting_credits;
 #ifdef THORIUM_NODE_DEBUG_RUN
-                printf("THORIUM_NODE_DEBUG_RUN here are some credits\n");
+                thorium_printf("THORIUM_NODE_DEBUG_RUN here are some credits\n");
 #endif
             }
 
@@ -2433,7 +2435,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
 
 #ifdef THORIUM_NODE_DEBUG_RUN
         if (node->alive_actors == 0) {
-            printf("THORIUM_NODE_DEBUG_RUN credits: %d\n", credits);
+            thorium_printf("THORIUM_NODE_DEBUG_RUN credits: %d\n", credits);
         }
 #endif
 
@@ -2460,7 +2462,7 @@ static void thorium_node_run_loop(struct thorium_node *node)
     }
 
 #ifdef THORIUM_NODE_DEBUG_20140601_8
-    printf("DEBUG node/%d exited loop\n",
+    thorium_printf("DEBUG node/%d exited loop\n",
                     thorium_node_name(node));
 #endif
 }
@@ -2582,7 +2584,7 @@ static void thorium_node_test_requests(struct thorium_node *node)
     if (core_queue_dequeue(&node->output_clean_outbound_buffer_queue, &worker_buffer)) {
 
             /*
-        printf("INJECT Dequeued buffer to inject\n");
+        thorium_printf("INJECT Dequeued buffer to inject\n");
         */
         thorium_node_free_worker_buffer(node, &worker_buffer);
     }
@@ -2614,7 +2616,7 @@ static void thorium_node_free_worker_buffer(struct thorium_node *node,
     CORE_DEBUGGER_ASSERT(worker != NULL);
 
     /*
-    printf("INJECT Injecting buffer into worker\n");
+    thorium_printf("INJECT Injecting buffer into worker\n");
     */
 
     /* Push the buffer in the ring of the worker
@@ -2688,7 +2690,7 @@ static void thorium_node_recycle_message(struct thorium_node *self, struct thori
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(thorium_message_type(message) == THORIUM_MESSAGE_TYPE_NODE_INBOUND
                     || thorium_message_type(message) == THORIUM_MESSAGE_TYPE_WORKER_OUTBOUND)) {
-        printf("Error: invalid type in thorium_node_recycle_message, actual: %d\n",
+        thorium_printf("Error: invalid type in thorium_node_recycle_message, actual: %d\n",
                         thorium_message_type(message));
         thorium_message_print(message);
     }
@@ -2814,7 +2816,7 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(thorium_message_destination_node(message) >= 0
                  && thorium_message_destination_node(message) < self->nodes)) {
-        printf("Error, invalid destination node %d (action %x)\n",
+        thorium_printf("Error, invalid destination node %d (action %x)\n",
                         thorium_message_destination_node(message),
                         thorium_message_action(message));
         thorium_message_print(message);
@@ -2825,7 +2827,7 @@ void thorium_node_send_with_transport(struct thorium_node *self, struct thorium_
                     && thorium_message_destination_node(message) < self->nodes);
 
 #ifdef DEBUG_NODE1
-    printf("NODE1 SEND %x\n", thorium_message_action(message));
+    thorium_printf("NODE1 SEND %x\n", thorium_message_action(message));
 #endif
 
     thorium_transport_send(&self->transport, message);
@@ -2844,11 +2846,11 @@ struct core_memory_pool *thorium_node_inbound_memory_pool(struct thorium_node *s
 
 void thorium_node_examine(struct thorium_node *self)
 {
-    printf("DEBUG_NODE Name= %d WorkerCount= %d\n",
+    thorium_printf("DEBUG_NODE Name= %d WorkerCount= %d\n",
                     self->name,
             thorium_worker_pool_worker_count(&self->worker_pool));
 
-    printf("MEMORY used / total -> %" PRIu64 " / %" PRIu64  "\n",
+    thorium_printf("MEMORY used / total -> %" PRIu64 " / %" PRIu64  "\n",
                         core_memory_get_utilized_byte_count(),
                         core_memory_get_total_byte_count());
 
@@ -2880,7 +2882,7 @@ static void thorium_node_inject_outbound_buffer(struct thorium_node *self, struc
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION_DETAILS
-        printf("Worker= %d\n", worker);
+        thorium_printf("Worker= %d\n", worker);
 #endif
 
     } else {
@@ -2931,7 +2933,7 @@ void thorium_node_regulator_run(struct thorium_node *self)
             CORE_BITMAP_SET_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 
 #ifdef DEBUG_NODE_REGULATOR
-            printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 1\n",
+            thorium_printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 1\n",
                             count);
 #endif
         }
@@ -2951,7 +2953,7 @@ void thorium_node_regulator_run(struct thorium_node *self)
             CORE_BITMAP_CLEAR_FLAG(self->flags, FLAG_REGULATOR_IS_ENABLED);
 
 #ifdef DEBUG_NODE_REGULATOR
-            printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 0\n",
+            thorium_printf("thorium_node: Warning buffered_message_count= %d FLAG_REGULATOR_IS_ENABLED = 0\n",
                             count);
 #endif
         }
@@ -2985,7 +2987,7 @@ static void thorium_node_receive_messages(struct thorium_node *node)
         thorium_node_prepare_received_message(node, &message);
 
 #ifdef DEBUG_NODE1
-        printf("NODE1 RECEIVE %x\n", thorium_message_action(&message));
+        thorium_printf("NODE1 RECEIVE %x\n", thorium_message_action(&message));
 #endif
 
 #ifdef THORIUM_NODE_DEBUG_INJECTION
@@ -3118,9 +3120,9 @@ void thorium_node_print_information(struct thorium_node *self)
     frequency_prefix = ' ';
     core_get_metric_system_unit_prefix(frequency, &frequency_prefix, &frequency);
 
-    printf("[thorium] node %d ---------------------------------\n", self->name);
+    thorium_printf("[thorium] node %d ---------------------------------\n", self->name);
 
-    printf("[thorium] node %d SUMMARY "
+    thorium_printf("[thorium] node %d SUMMARY "
                     "Tick: %" PRIu64 " (%.2f %cHz)\n",
                     self->name,
                     self->tick,
@@ -3134,7 +3136,7 @@ void thorium_node_print_information(struct thorium_node *self)
      * and
      * the heap size.
      */
-    printf("[thorium] node %d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
+    thorium_printf("[thorium] node %d METRICS AliveActorCount: %d ByteCount: %" PRIu64 " / %" PRIu64 "\n",
                     self->name,
                     self->alive_actors,
                     core_memory_get_utilized_byte_count(),
@@ -3166,11 +3168,11 @@ void thorium_node_print_information(struct thorium_node *self)
     core_get_metric_system_unit_prefix(inbound_throughput, &input_prefix, &inbound_throughput);
     core_get_metric_system_unit_prefix(outbound_throughput, &output_prefix, &outbound_throughput);
 
-    printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
+    thorium_printf("[thorium] node %d TRANSPORT ReceivedMessageCount: %" PRIu64 ""
                     " SentMessageCount: %" PRIu64 "\n", self->name,
                     received_message_count, sent_message_count);
 
-    printf("[thorium] node %d THROUGHPUT"
+    thorium_printf("[thorium] node %d THROUGHPUT"
                     " input: %.2f %cMPS (%.2f Bps) output: %.2f %cMPS (current: %.2f max. %.2f) (%.2f Bps)"
                     "\n",
                     self->name,
@@ -3182,7 +3184,7 @@ void thorium_node_print_information(struct thorium_node *self)
                     current_output_throughput, maximum_output_throughput,
                     outbound_bandwidth);
 
-    printf("[thorium] node %d"
+    thorium_printf("[thorium] node %d"
                     " MESSAGING"
                     " InboundMessageCountInQueue: %d"
                     " OutboundMessageCountInRing: %d"
@@ -3297,7 +3299,7 @@ void thorium_node_tracepoint(struct thorium_node *self, const char *event)
     time = core_timer_get_nanoseconds(&self->timer);
     delta = time - self->last_time;
 
-    printf("%" PRIu64 " (+%d) thorium_node:%s\n",
+    thorium_printf("%" PRIu64 " (+%d) thorium_node:%s\n",
                     time, delta, event);
 
     self->last_time = time;
@@ -3347,7 +3349,7 @@ void thorium_node_configure_actor_ratio(struct thorium_node *self)
             self->actor_count_per_node_to_node_count_ratio_for_multiplexer = new_ratio;
 
             /*
-            printf("ratio %d\n", new_ratio);
+            thorium_printf("ratio %d\n", new_ratio);
             */
         }
     }

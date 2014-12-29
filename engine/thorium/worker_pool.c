@@ -13,6 +13,8 @@
 #include "worker.h"
 #include "node.h"
 
+#include "thorium_engine.h"
+
 #include "scheduler/migration.h"
 
 #include <core/helpers/vector_helper.h>
@@ -121,7 +123,7 @@ void thorium_worker_pool_init(struct thorium_worker_pool *pool, int workers,
      * handles everything.
      */
     if (pool->worker_count < 1) {
-        printf("Error: the number of workers must be at least 1.\n");
+        thorium_printf("Error: the number of workers must be at least 1.\n");
         core_exit_with_error();
     }
 
@@ -202,7 +204,7 @@ void thorium_worker_pool_delete_workers(struct thorium_worker_pool *pool)
         worker = thorium_worker_pool_get_worker(pool, i);
 
 #if 0
-        printf("worker/%d loop_load %f\n", thorium_worker_name(worker),
+        thorium_printf("worker/%d loop_load %f\n", thorium_worker_name(worker),
                     thorium_worker_get_loop_load(worker));
 #endif
 
@@ -303,7 +305,7 @@ void thorium_worker_pool_stop(struct thorium_worker_pool *pool)
      */
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
-    printf("Stop workers\n");
+    thorium_printf("Stop workers\n");
 #endif
 
     for (i = 0; i < pool->worker_count; i++) {
@@ -477,33 +479,33 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
 
     load = sum / count;
 
-    printf("[thorium] node %d LOAD %d s %.2f/%d (%.2f)%s\n",
+    thorium_printf("[thorium] node %d LOAD %d s %.2f/%d (%.2f)%s\n",
                     node_name, elapsed,
                     sum, count, load, buffer);
 
     if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
-        printf("[thorium] node %d FUTURE_TIMELINE %d s %s\n",
+        thorium_printf("[thorium] node %d FUTURE_TIMELINE %d s %s\n",
                     node_name, elapsed,
                     buffer_for_future_timeline);
 
-        printf("[thorium] node %d INPUT_MPS %d s%s\n",
+        thorium_printf("[thorium] node %d INPUT_MPS %d s%s\n",
                     node_name, elapsed,
                     buffer_for_input_throughput);
 
-        printf("[thorium] node %d OUTPUT_MPS %d s%s\n",
+        thorium_printf("[thorium] node %d OUTPUT_MPS %d s%s\n",
                     node_name, elapsed,
                     buffer_for_output_throughput);
     }
 
 #ifdef THORIUM_WORKER_ENABLE_WAIT_AND_SIGNAL
-    printf("[thorium] node %d %s WAKE_UP_COUNT %d s %s\n",
+    thorium_printf("[thorium] node %d %s WAKE_UP_COUNT %d s %s\n",
                     node_name,
                     description, elapsed,
                     buffer_for_wake_up_events);
 #endif
 
     if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
-        printf("[thorium] node %d DOA %d s%s\n",
+        thorium_printf("[thorium] node %d DOA %d s%s\n",
                     node_name, elapsed,
                     buffer_for_traffic_aggregation);
     }
@@ -597,7 +599,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
 
     if (actor == NULL) {
 #ifdef THORIUM_WORKER_POOL_DEBUG_DEAD_CHANNEL
-        printf("DEAD LETTER CHANNEL...\n");
+        thorium_printf("DEAD LETTER CHANNEL...\n");
 #endif
 
         core_queue_enqueue(&pool->clean_message_queue, message);
@@ -632,7 +634,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
     if (worker_index == THORIUM_WORKER_NONE) {
 
 #ifdef DEBUG_DEAD_CHANNEL
-        printf("Warning, can not deliver action %x to %d\n",
+        thorium_printf("Warning, can not deliver action %x to %d\n",
                         thorium_message_action(message), name);
 #endif
 
@@ -648,7 +650,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
     if (!thorium_worker_enqueue_inbound_message(affinity_worker, message)) {
 
 #ifdef THORIUM_WORKER_POOL_DEBUG_MESSAGE_BUFFERING
-        printf("DEBUG897 could not enqueue message, buffering...\n");
+        thorium_printf("DEBUG897 could not enqueue message, buffering...\n");
 #endif
 
         core_queue_enqueue(&pool->inbound_message_queue_buffer, message);
@@ -676,7 +678,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
          * Now, the actor must be scheduled on a worker.
          */
 /*
-        printf("DEBUG message was enqueued in actor mailbox\n");
+        thorium_printf("DEBUG message was enqueued in actor mailbox\n");
         */
 
         /* Check if the actor is already assigned to a worker
@@ -694,7 +696,7 @@ static int thorium_worker_pool_give_message_to_worker(struct thorium_worker_pool
         affinity_worker = thorium_worker_pool_get_worker(pool, worker_index);
 
         /*
-        printf("DEBUG actor has an assigned worker\n");
+        thorium_printf("DEBUG actor has an assigned worker\n");
         */
 
         /*
@@ -759,7 +761,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
              * on every worker are full.
              */
 #ifdef THORIUM_WORKER_POOL_DEBUG_ACTOR_ASSIGNMENT_PROBLEM
-            printf("Notice: actor %d has no assigned worker\n", name);
+            thorium_printf("Notice: actor %d has no assigned worker\n", name);
 #endif
             thorium_worker_pool_assign_worker_to_actor(pool, name);
             worker_index = thorium_balancer_get_actor_worker(&pool->balancer, name);
@@ -774,7 +776,7 @@ void thorium_worker_pool_work(struct thorium_worker_pool *pool)
 #endif
 
 #if 0
-    printf("DEBUG pool receives message for actor %d\n",
+    thorium_printf("DEBUG pool receives message for actor %d\n",
                     destination);
 #endif
 
@@ -821,7 +823,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
 #endif
 
                 /*
-    printf("DEBUG Needs to do actor placement\n");
+    thorium_printf("DEBUG Needs to do actor placement\n");
     */
     /* assign this actor to the least busy actor
      */
@@ -839,7 +841,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
      */
     if (actor == NULL) {
 /*
-        printf("Warning: actor %d does not exist\n", name);
+        thorium_printf("Warning: actor %d does not exist\n", name);
         */
         return;
     }
@@ -857,7 +859,7 @@ void thorium_worker_pool_assign_worker_to_actor(struct thorium_worker_pool *pool
     CORE_DEBUGGER_ASSERT(worker_index >= 0);
 
 #ifdef THORIUM_WORKER_POOL_DEBUG
-    printf("ASSIGNING %d to %d\n", name, worker_index);
+    thorium_printf("ASSIGNING %d to %d\n", name, worker_index);
 #endif
 
     thorium_balancer_set_actor_worker(&pool->balancer, name, worker_index);
@@ -1126,13 +1128,13 @@ void thorium_worker_pool_examine(struct thorium_worker_pool *self)
     size = thorium_worker_pool_worker_count(self);
 
     /*
-    printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
+    thorium_printf("QUEUE Name= scheduled_actor_queue_buffer size= %d\n",
                     core_queue_size(&self->scheduled_actor_queue_buffer));
                     */
 
     thorium_worker_pool_examine_inbound_queue(self);
 
-    printf("QUEUE Name= clean_message_queue size= %d\n",
+    thorium_printf("QUEUE Name= clean_message_queue size= %d\n",
                     core_queue_size(&self->clean_message_queue));
 
     for (i = 0; i < size; ++i) {
@@ -1172,7 +1174,7 @@ static void thorium_worker_pool_examine_inbound_queue(struct thorium_worker_pool
     int i;
 
     queue_size = core_queue_size(&self->inbound_message_queue_buffer);
-    printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
+    thorium_printf("QUEUE Name= inbound_message_queue_buffer size= %d\n",
                     queue_size);
 
     /*

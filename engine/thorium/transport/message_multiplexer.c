@@ -3,6 +3,7 @@
 #include "multiplexed_buffer.h"
 
 #include <engine/thorium/node.h>
+#include <engine/thorium/thorium_engine.h>
 
 #include <tracepoints/tracepoints.h>
 
@@ -115,7 +116,7 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
     */
 
 #ifdef DEBUG_MULTIPLEXER
-    printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
+    thorium_printf("DEBUG_MULTIPLEXER size %d bytes %d\n", size, bytes);
 #endif
 
     position = 0;
@@ -136,11 +137,11 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
         position += self->buffer_size_in_bytes;
 
 #ifdef DEBUG_MULTIPLEXER1
-        printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init index %d buffer %p\n", i, buffer);
+        thorium_printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init index %d buffer %p\n", i, buffer);
 #endif
 
 #ifdef DEBUG_MULTIPLEXER
-        printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init (after) index %d buffer %p\n", i,
+        thorium_printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_init (after) index %d buffer %p\n", i,
                         core_vector_at(&self->buffers, i));
 #endif
     }
@@ -198,7 +199,7 @@ void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *sel
              * @see http://www.sciencedirect.com/science/article/pii/0191260788900088
              * @see http://ww2.cityofpasadena.net/councilagendas/2007%20agendas/feb_26_07/pasadena%20traffic%20reduction%20strategies%2011-20-06%20draft.pdf
              */
-            printf("[thorium] node %d worker %d message_multiplexer:"
+            thorium_printf("[thorium] node %d worker %d message_multiplexer:"
                             " original_message_count %d real_message_count %d (traffic reduction: %.2f%%)\n",
                             thorium_node_name(self->node), thorium_worker_name(self->worker),
                     self->original_message_count, self->real_message_count, (1.0 - ratio) * 100);
@@ -290,7 +291,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     int current_node;
 
 #ifdef DEBUG_MULTIPLEXER
-    printf("multiplex\n");
+    thorium_printf("multiplex\n");
     thorium_message_print(message);
 #endif
 
@@ -328,7 +329,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
     /*
     thorium_message_print(message);
-    printf("router: source_node %d current_node %d next_node_in_route %d"
+    thorium_printf("router: source_node %d current_node %d next_node_in_route %d"
                     " destination_node %d\n",
                     source_node, current_node,
                     next_node_in_route, destination_node);
@@ -354,7 +355,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     destination_actor = thorium_message_destination(message);
 
 #ifdef DEBUG_MULTIPLEXER
-    printf("DEBUG multiplex count %d required_size %d action %x\n",
+    thorium_printf("DEBUG multiplex count %d required_size %d action %x\n",
                     count, required_size, action);
 #endif
 
@@ -367,7 +368,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
 
 #ifdef CORE_DEBUGGER_ASSERT
     if (real_multiplexed_buffer == NULL) {
-        printf("Error action %d destination_node %d destination_actor %d\n", action, destination_node,
+        thorium_printf("Error action %d destination_node %d destination_actor %d\n", action, destination_node,
                         destination_actor);
     }
 #endif
@@ -381,13 +382,13 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     if (required_size > maximum_size) {
 
 #ifdef DEBUG_MULTIPLEXER
-        printf("too large required_size %d maximum_size %d\n", required_size, maximum_size);
+        thorium_printf("too large required_size %d maximum_size %d\n", required_size, maximum_size);
 #endif
         return 0;
     }
 
     /*
-    printf("MULTIPLEX_MESSAGE\n");
+    thorium_printf("MULTIPLEX_MESSAGE\n");
     */
 
     new_size = current_size + required_size;
@@ -398,7 +399,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     if (new_size > maximum_size) {
 
 #ifdef DEBUG_MULTIPLEXER
-        printf("thorium_message_multiplexer: must FLUSH thorium_message_multiplexer_multiplex required_size %d new_size %d maximum_size %d\n",
+        thorium_printf("thorium_message_multiplexer: must FLUSH thorium_message_multiplexer_multiplex required_size %d new_size %d maximum_size %d\n",
                     required_size, new_size, maximum_size);
 #endif
 
@@ -452,7 +453,7 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     }
 
     /*
-    printf("DEBUG worker_latency %d ns\n",
+    thorium_printf("DEBUG worker_latency %d ns\n",
                     thorium_worker_latency(self->worker));
                     */
 
@@ -518,7 +519,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int routing_destination;
 
 #ifdef DEBUG_MULTIPLEXER
-    printf("demultiplex message\n");
+    thorium_printf("demultiplex message\n");
     thorium_message_print(message);
 #endif
 
@@ -533,7 +534,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     }
 
     /*
-    printf("MULTIPLEXER demultiplex\n");
+    thorium_printf("MULTIPLEXER demultiplex\n");
     */
 
     messages = 0;
@@ -579,9 +580,9 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
          *    the route.
          */
         /*
-        printf("demultiplex: \n");
+        thorium_printf("demultiplex: \n");
         thorium_message_print(&new_message);
-        printf("\n");
+        thorium_printf("\n");
 */
         /*
          * Mark the message for recycling.
@@ -590,7 +591,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
         if (thorium_message_action(&new_message) == ACTION_INVALID) {
-            printf("Error invalid action DEMUL Multiplexer position %d count %d new_count %d\n",
+            thorium_printf("Error invalid action DEMUL Multiplexer position %d count %d new_count %d\n",
                             position, count, new_count);
             thorium_message_print(&new_message);
         }
@@ -599,11 +600,11 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
         CORE_DEBUGGER_ASSERT(thorium_message_action(&new_message) != ACTION_INVALID);
 
         /*
-        printf("DEMULTIPLEX_MESSAGE\n");
+        thorium_printf("DEMULTIPLEX_MESSAGE\n");
         */
 
         /*
-        printf("demultiplex, local delivery: \n");
+        thorium_printf("demultiplex, local delivery: \n");
         thorium_message_print(&new_message);
         */
 
@@ -645,7 +646,7 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     CORE_DEBUGGER_ASSERT(messages > 0);
 
 #ifdef DEBUG_MULTIPLEXER
-    printf("thorium_message_multiplexer_demultiplex %d messages\n",
+    thorium_printf("thorium_message_multiplexer_demultiplex %d messages\n",
                     messages);
 #endif
 
@@ -702,7 +703,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 
 #ifdef DEBUG_MULTIPLEXER_TEST
     if (size >= DEBUG_MINIMUM_COUNT)
-        printf("DEBUG multiplexer_test buffers with content: %d\n",
+        thorium_printf("DEBUG multiplexer_test buffers with content: %d\n",
                     size);
 #endif
 
@@ -851,7 +852,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (!(core_set_find(&self->buffers_with_content, &index))) {
         multiplexed_buffer = core_vector_at(&self->buffers, index);
-        printf("index %d has no content\n", index);
+        thorium_printf("index %d has no content\n", index);
 
         thorium_multiplexed_buffer_print(multiplexed_buffer);
     }
@@ -891,7 +892,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
     if (current_size <= 0)
-        printf("current_size %d maximum_size %d\n", current_size, maximum_size);
+        thorium_printf("current_size %d maximum_size %d\n", current_size, maximum_size);
 #endif
 
     CORE_DEBUGGER_ASSERT(current_size > 0);
@@ -924,13 +925,13 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     thorium_message_write_metadata(&message);
 
 #ifdef DEBUG_MULTIPLEXER_FLUSH
-    printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d current_size %d maximum_size %d"
+    thorium_printf("DEBUG_MULTIPLEXER thorium_message_multiplexer_flush index %d buffer %p force %d current_size %d maximum_size %d"
                     " destination_node %d\n",
                     index, buffer, force,
                     current_size, maximum_size,
                     thorium_message_destination_node(&message));
 
-    printf("message in flush\n");
+    thorium_printf("message in flush\n");
     thorium_multiplexed_buffer_print(multiplexed_buffer);
     thorium_message_print(&message);
 #endif
@@ -943,7 +944,7 @@ void thorium_message_multiplexer_flush(struct thorium_message_multiplexer *self,
     thorium_worker_enqueue_outbound_message(self->worker, &message);
 
     /*
-    printf("MULTIPLEXER FLUSH\n");
+    thorium_printf("MULTIPLEXER FLUSH\n");
     */
 
     ++self->real_message_count;
@@ -988,7 +989,7 @@ void thorium_message_multiplexer_set_worker(struct thorium_message_multiplexer *
 
     if (thorium_node_name(self->node) == 0 && thorium_worker_name(self->worker) == 0
                     && thorium_node_must_print_data(self->node)) {
-        printf("[thorium] message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
+        thorium_printf("[thorium] message_multiplexer: disabled=%d buffer_size_in_bytes=%d timeout_in_nanoseconds=%d\n",
                             CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED),
                         self->buffer_size_in_bytes, self->timeout_in_nanoseconds);
     }
@@ -1045,7 +1046,7 @@ void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_
 
     position += sprintf(buffer + position, "\n");
 
-    printf("%s", buffer);
+    thorium_printf("%s", buffer);
 }
 
 int thorium_message_multiplexer_get_original_message_count(struct thorium_message_multiplexer *self)
@@ -1100,7 +1101,7 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
 
 #ifdef MULTIPLEXER_IS_VERBOSE
     if (print)
-        printf("event_count %" PRIu64 " last %" PRIu64 " elapsed %" PRIu64 " = %" PRIu64 " MPS\n",
+        thorium_printf("event_count %" PRIu64 " last %" PRIu64 " elapsed %" PRIu64 " = %" PRIu64 " MPS\n",
                     event_count, self->last_send_event_count, elapsed, throughput);
 #endif
 
@@ -1118,7 +1119,7 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
     if (new_timeout != THORIUM_TIMEOUT_NO_VALUE) {
 #ifdef MULTIPLEXER_IS_VERBOSE
         if (print)
-            printf("TIMEOUT -> old value %d new value %d\n",
+            thorium_printf("TIMEOUT -> old value %d new value %d\n",
                             self->timeout_in_nanoseconds,
                             new_timeout);
 #endif

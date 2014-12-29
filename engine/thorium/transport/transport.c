@@ -31,6 +31,8 @@
 #include <engine/thorium/message.h>
 #include <engine/thorium/node.h>
 
+#include <engine/thorium/thorium_engine.h>
+
 #include <core/system/debugger.h>
 
 #include <string.h>
@@ -75,7 +77,7 @@ void thorium_transport_init(struct thorium_transport *self, struct thorium_node 
     self->concrete_transport = NULL;
 
     /*
-    printf("DEBUG Initiating transport\n");
+    thorium_printf("DEBUG Initiating transport\n");
     */
     /* Select the transport layer
      */
@@ -160,7 +162,7 @@ int thorium_transport_send(struct thorium_transport *self, struct thorium_messag
     if (value) {
 
 #ifdef THORIUM_TRANSPORT_DEBUG
-        printf("TRANSPORT SEND Source %d Destination %d Action %x Count %d\n",
+        thorium_printf("TRANSPORT SEND Source %d Destination %d Action %x Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
                         thorium_message_action(message),
@@ -210,7 +212,7 @@ int thorium_transport_receive(struct thorium_transport *self, struct thorium_mes
         tracepoint(thorium_message, transport_receive, message);
 
 #ifdef THORIUM_TRANSPORT_DEBUG
-        printf("TRANSPORT RECEIVE Source %d Destination %d Action %x Count %d\n",
+        thorium_printf("TRANSPORT RECEIVE Source %d Destination %d Action %x Count %d\n",
                         thorium_message_source_node(message),
                         thorium_message_destination_node(message),
                         thorium_message_action(message),
@@ -403,18 +405,18 @@ const char *thorium_transport_get_name(struct thorium_transport *self)
 void thorium_transport_print(struct thorium_transport *self)
 {
         /*
-    printf("thorium_transport: TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
+    thorium_printf("thorium_transport: TRANSPORT Rank: %d RankCount: %d Implementation: %s\n",
                 self->rank, self->size,
                 thorium_transport_get_name(self));
                 */
     if (self->rank == 0
          && thorium_node_must_print_data(self->node)) {
-        printf("[thorium] thorium_transport: type %s\n",
+        thorium_printf("[thorium] thorium_transport: type %s\n",
                     self->transport_interface->name);
 
-        printf("[thorium] MPS: Messages Per Second\n");
-        printf("[thorium] DOA: Degree Of Aggregation\n");
-        printf("[thorium] Bps: Bytes Per Second\n");
+        thorium_printf("[thorium] MPS: Messages Per Second\n");
+        thorium_printf("[thorium] DOA: Degree Of Aggregation\n");
+        thorium_printf("[thorium] Bps: Bytes Per Second\n");
     }
 }
 
@@ -437,7 +439,7 @@ void thorium_transport_print_event(struct thorium_transport *self, int type, str
 
     time = core_timer_get_nanoseconds(&self->timer);
     time -= self->start_time;
-    printf("thorium_transport print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
+    thorium_printf("thorium_transport print_event time_nanoseconds= %" PRIu64 " type= %s source= %d destination= %d count= %d\n",
                     time, description,
                     source_rank, destination_rank, count);
 }
@@ -488,7 +490,7 @@ void thorium_transport_update_outbound_throughput(struct thorium_transport *self
     self->current_outbound_throughput /= ((0.0 + delta_in_ns) / (1000*1000*1000));
 
 #if 0
-    printf("delta %d sent %" PRIu64 " last %" PRIu64 " delta_ns %" PRIu64 ""
+    thorium_printf("delta %d sent %" PRIu64 " last %" PRIu64 " delta_ns %" PRIu64 ""
                   "  New value %f\n", delta, self->sent_message_count,
                   self->last_sent_message_count, delta_in_ns,
                     self->current_outbound_throughput);

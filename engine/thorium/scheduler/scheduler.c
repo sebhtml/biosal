@@ -9,6 +9,8 @@
 #include <core/system/memory.h>
 #include <core/system/debugger.h>
 
+#include <engine/thorium/thorium_engine.h>
+
 #define MEMORY_SCHEDULER 0x323f94b8
 
 /*
@@ -96,5 +98,5 @@ void thorium_scheduler_print(struct thorium_scheduler *self)
 void thorium_scheduler_print_type(struct thorium_scheduler *self)
 {
     if (self->node == 0 && self->worker == 0)
-        printf("[thorium] thorium_scheduler: type %s\n", self->implementation->name);
+        thorium_printf("[thorium] thorium_scheduler: type %s\n", self->implementation->name);
 }
