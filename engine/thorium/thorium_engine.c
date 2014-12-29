@@ -48,3 +48,17 @@ int biosal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script
 
     return return_value;
 }
+
+void thorium_printf(const char *format, ...)
+{
+    va_list arguments;
+    FILE *file;
+
+    file = stderr;
+
+    va_start(arguments, format);
+
+    vfprintf(file, format, arguments);
+
+    va_end(arguments);
+}

@@ -6,6 +6,8 @@
 #include "actor.h"
 #include "message.h"
 
+#include <stdarg.h>
+
 struct thorium_script;
 
 /*
@@ -29,5 +31,7 @@ int biosal_thorium_engine_boot(struct biosal_thorium_engine *self, int script_id
  * read if the script_identifier is provided.
  */
 int biosal_thorium_engine_boot_initial_actor(int *argc, char ***argv, int script_identifier, struct thorium_script *script);
+
+void thorium_printf(const char *format, ...);
 
 #endif
