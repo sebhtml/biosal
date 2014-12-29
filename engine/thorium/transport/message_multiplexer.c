@@ -461,10 +461,14 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     /*
      * Try to flush. This only flushes something if the buffer is full.
      */
-    /*
-    thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_DOA);
-    thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_TIME);
-    */
+    if (thorium_message_multiplexer_buffer_is_ready(self, real_multiplexed_buffer)) {
+
+        /*
+         * Try to flush here too. This is required in order to satisfy the
+         * technical requirement of a DOA limit.
+         */
+        thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
+    }
 
     /*
      * Verify invariant.
