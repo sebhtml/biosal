@@ -61,6 +61,9 @@ void thorium_message_multiplexer_print_traffic_reduction(struct thorium_message_
 
 void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplexer *self);
 
+int thorium_message_multiplexer_buffer_is_ready(struct thorium_message_multiplexer *self,
+                struct thorium_multiplexed_buffer *buffer);
+
 void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
                 struct thorium_node *node, struct thorium_multiplexer_policy *policy)
 {
@@ -657,23 +660,14 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
      * Check if the multiplexer has waited enough.
      */
 
-    uint64_t time;
-    int duration;
     int index;
-    uint64_t buffer_time;
     struct thorium_multiplexed_buffer *multiplexed_buffer;
+    int buffer_is_ready;
 
 #if defined(THORIUM_MULTIPLEXER_USE_TREE) || defined(THORIUM_MULTIPLEXER_USE_HEAP)
     uint64_t *lowest_key;
     int *index_bucket;
 #endif
-
-    int timeout;
-#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
-    double acceptable_traffic_reduction;
-    double traffic_reduction;
-#endif
-    int message_count;
 
     if (CORE_BITMAP_GET_FLAG(self->flags, FLAG_DISABLED)) {
         return;
@@ -758,39 +752,15 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
 #endif
 
         multiplexed_buffer = core_vector_at(&self->buffers, index);
-        buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
-        message_count = multiplexed_buffer->message_count_;
 
-        /*
-        * Flush only the buffers with a elapsed time that is greater or equal to the
-        * timeout.
-        */
-        time = core_timer_get_nanoseconds(&self->timer);
-
-        /*
-        * Get the current time. This current time will be compared
-        * with the virtual time of each item in the timeline.
-        */
-        duration = time - buffer_time;
-
-        timeout = self->timeout_in_nanoseconds;
-
-#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
-        traffic_reduction = thorium_multiplexed_buffer_get_traffic_reduction(multiplexed_buffer);
-#endif
+        buffer_is_ready = thorium_message_multiplexer_buffer_is_ready(self, multiplexed_buffer);
 
         /*
         * The oldest item is too recent.
         * Therefore, all the others are too recent too
         * because the timeline is ordered.
         */
-        if (timeout != 0
-                    && duration < timeout
-                    && message_count < self->degree_of_aggregation_limit
-#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
-                   traffic_reduction < acceptable_traffic_reduction
-#endif
-        ) {
+        if (!buffer_is_ready) {
 #ifdef THORIUM_MULTIPLEXER_USE_QUEUE
             core_queue_enqueue(&self->timeline, &index);
 #endif
@@ -1155,4 +1125,72 @@ void thorium_message_multiplexer_update_timeout(struct thorium_message_multiplex
     self->last_update_time = now;
     self->last_time = now_nanoseconds;
     self->last_send_event_count = event_count;
+}
+
+int thorium_message_multiplexer_buffer_is_ready(struct thorium_message_multiplexer *self,
+                struct thorium_multiplexed_buffer *multiplexed_buffer)
+{
+    uint64_t buffer_time;
+    int timeout;
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
+    double acceptable_traffic_reduction;
+    double traffic_reduction;
+#endif
+    int message_count;
+    uint64_t time;
+    int duration;
+
+    /*
+    * Flush only the buffers with a elapsed time that is greater or equal to the
+    * timeout.
+    */
+    time = core_timer_get_nanoseconds(&self->timer);
+
+    buffer_time = thorium_multiplexed_buffer_time(multiplexed_buffer);
+    message_count = multiplexed_buffer->message_count_;
+
+    /*
+    * Get the current time. This current time will be compared
+    * with the virtual time of each item in the timeline.
+    */
+    duration = time - buffer_time;
+
+    timeout = self->timeout_in_nanoseconds;
+
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
+    traffic_reduction = thorium_multiplexed_buffer_get_traffic_reduction(multiplexed_buffer);
+#endif
+
+    /*
+     * Flush if the timeout is 0. This means that no aggregation will
+     * take place anyway.
+     */
+    if (timeout == 0) {
+        return 1;
+    }
+
+    /*
+     * Flush if DOA (degree of aggregation) is large enough.
+     */
+    if (message_count >= self->degree_of_aggregation_limit) {
+        return 1;
+    }
+
+    /*
+     * Flush if the age of the buffer is large enough.
+     */
+    if (duration >= timeout) {
+        return 1;
+    }
+
+#ifdef CHECK_PREDICTED_TRAFFIC_REDUCTION
+    if (traffic_reduction >= acceptable_traffic_reduction) {
+        return 1;
+    }
+#endif
+
+    /*
+     * Delay the flush function call a bit longer.
+     */
+    return 0;
 }
