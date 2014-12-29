@@ -532,6 +532,7 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     } else if (concrete_self->step == STEP_GET_PARENT_VERTEX_DATA) {
 
         CORE_DEBUGGER_ASSERT(concrete_self->selected_parent >= 0);
+
         vertex = biosal_vertex_neighborhood_vertex(&concrete_self->main_neighborhood);
         code = biosal_assembly_vertex_get_parent(vertex,
                             concrete_self->selected_parent);
