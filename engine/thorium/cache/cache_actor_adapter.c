@@ -41,11 +41,17 @@ void thorium_actor_enable_message_cache(struct thorium_actor *self, struct thori
 
     count = thorium_message_count(message);
 
+    CORE_DEBUGGER_ASSERT(count >= (int)(2 * sizeof(int)));
+
     if (count < (int)(sizeof(request_action) + sizeof(reply_action))) {
         return;
     }
 
     thorium_message_unpack_2_int(message, &request_action, &reply_action);
+
+    /*
+    printf("Enable message cache %d %d\n", request_action, reply_action);
+    */
 
     thorium_message_cache_enable(&self->message_cache, request_action,
                     reply_action);
