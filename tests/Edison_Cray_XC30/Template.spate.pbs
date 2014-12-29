@@ -14,11 +14,10 @@ export CRAY_MALLOPT_OFF=1
 
 echo "Commit= __COMMIT__"
 
-# -print-thorium-data
+# -enable-actor-log all \
 
 aprun -n __NODES__ -N 1 -d 23 -r 1 \
               ./__JOB__.__APP__ -threads-per-node 23 \
               -k 27 __SAMPLE__/*.fastq -o __JOB__ \
               -minimum-coverage 2 \
               -print-thorium-data \
-              -enable-actor-log all \
