@@ -67,7 +67,9 @@ int thorium_actor_compute_count_small_messages_and_node_scope(struct thorium_act
 
     ratio = self->node->actor_count_per_node_to_node_count_ratio_for_multiplexer;
 
+    /*
     printf("ratio %d\n", ratio);
+    */
 
     /*
      * More actors mean more messages.
