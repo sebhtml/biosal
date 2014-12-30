@@ -160,11 +160,6 @@ void thorium_polytope_generate_tuples(struct thorium_polytope *self)
     if (!found)
         return;
 
-    thorium_printf("[thorium] Found polytope geometry: size %d diameter %d radix %d\n",
-                                size, diameter, radix);
-#ifdef VERBOSE_POLYTOPE
-#endif
-
     self->diameter = diameter;
     self->radix = radix;
 
@@ -238,4 +233,12 @@ void thorium_polytope_initialize_loads(struct thorium_polytope *self)
             set_load(self, position, value, 0);
         }
     }
+}
+
+void thorium_polytope_print(struct thorium_polytope *self)
+{
+    thorium_printf("[thorium] Found polytope geometry: size %d diameter %d radix %d\n",
+                                self->size, self->diameter, self->radix);
+#ifdef VERBOSE_POLYTOPE
+#endif
 }

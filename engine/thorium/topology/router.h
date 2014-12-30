@@ -19,5 +19,6 @@ void thorium_router_destroy(struct thorium_router *self);
 
 int thorium_router_get_next_rank_in_route(struct thorium_router *self,
                 int source, int current, int destination);
+void thorium_router_print(struct thorium_router *self);
 
 #endif

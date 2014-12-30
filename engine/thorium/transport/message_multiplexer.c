@@ -174,6 +174,10 @@ void thorium_message_multiplexer_init(struct thorium_message_multiplexer *self,
 
     thorium_router_init(&self->router, self->node->nodes,
                     TOPOLOGY_POLYTOPE);
+
+    if (thorium_node_must_print_data(self->node)) {
+        thorium_router_print(&self->router);
+    }
 }
 
 void thorium_message_multiplexer_destroy(struct thorium_message_multiplexer *self)
