@@ -328,9 +328,7 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
 int thorium_actor_name(struct thorium_actor *self)
 {
-#ifdef CORE_DEBUGGER_ASSERT_ENABLED_LEVEL_99
     CORE_DEBUGGER_ASSERT(self != NULL);
-#endif
 
     return self->name;
 }
