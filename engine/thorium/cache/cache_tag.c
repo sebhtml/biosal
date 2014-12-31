@@ -51,7 +51,7 @@ void thorium_cache_tag_reset(struct thorium_cache_tag *self)
 
 void thorium_cache_tag_print(struct thorium_cache_tag *self)
 {
-    printf("DEBUG thorium_message_cache_print action %d destination %d"
+    printf("REGRESSION thorium_cache_tag_print action %d destination %d"
                    " count %d signature %" PRIx64 "\n",
                    self->action, self->destination, self->count,
                    self->signature);
