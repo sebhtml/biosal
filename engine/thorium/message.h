@@ -20,6 +20,13 @@
 
 #define ACTION_INVALID -1
 
+/*
+ * Enable the routing information to be stored
+ * inside messages.
+ * This is required for the code in engine/thorium/cache/.
+ */
+/*
+*/
 #define THORIUM_MESSAGE_USE_ROUTING
 
 /*
@@ -67,6 +74,12 @@
 
 #endif
 
+#ifdef THORIUM_MESSAGE_USE_ROUTING
+#define ROUTING_SIZE (2 * sizeof(int))
+#else
+#define ROUTING_SIZE (0)
+#endif
+
 /*
  * - action
  * - number
@@ -74,8 +87,9 @@
  * - destination_actor
  * - routing_source
  * - routing_destination
+ * - tracepoint stuff (disabled by default)
  */
-#define THORIUM_MESSAGE_METADATA_SIZE (6 * sizeof(int) + TRACEPOINT_SIZE)
+#define THORIUM_MESSAGE_METADATA_SIZE (4 * sizeof(int) + ROUTING_SIZE + TRACEPOINT_SIZE)
 
 /*
  * This is a message.
