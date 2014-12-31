@@ -11,7 +11,24 @@
 #include <core/system/debugger.h>
 #include <core/system/memory_pool.h>
 
+/*
+#define TRACK_REGRESSION_2014_12_30
+*/
+
+#ifdef TRACK_REGRESSION_2014_12_30
+#include <genomics/assembly/assembly_graph_store.h>
+#endif
+
 #include <stdio.h>
+
+#ifdef TRACK_REGRESSION_2014_12_30
+uint64_t TRACK_SIGNATURE = 0x70127736b0c54cf2;
+
+/*
+*/
+#define TRACK_REGRESSION_2014_12_30_BUG
+
+#endif
 
 void thorium_message_cache_init(struct thorium_message_cache *self)
 {
@@ -92,6 +109,11 @@ struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_m
     action = thorium_message_action(request_message);
 
     if (core_map_get(&self->actions, &action) == NULL) {
+
+            /*
+        printf("DEBUG request action %d is not supported !\n",
+                        action);
+                        */
         return NULL;
     }
 
@@ -101,6 +123,31 @@ struct thorium_message *thorium_message_cache_get_reply_message(struct thorium_m
      */
     thorium_cache_tag_set(&cache_tag, request_message);
     reply_message = core_map_get(&self->entries, &cache_tag);
+
+#ifdef TRACK_REGRESSION_2014_12_30_BUG
+    if (action == ACTION_ASSEMBLY_GET_VERTEX
+                    && thorium_cache_tag_signature(&cache_tag) == TRACK_SIGNATURE) {
+
+        if (reply_message == NULL) {
+            reply_message = core_map_get(&self->entries, &cache_tag);
+            reply_message = core_map_get(&self->entries, &cache_tag);
+            reply_message = core_map_get(&self->entries, &cache_tag);
+            reply_message = core_map_get(&self->entries, &cache_tag);
+            reply_message = core_map_get(&self->entries, &cache_tag);
+            reply_message = core_map_get(&self->entries, &cache_tag);
+
+            if (reply_message != NULL) {
+                printf("WHAT ! not NULL anymore...\n");
+            }
+        }
+        printf("REGRESSION get_reply_message for ACTION_ASSEMBLY_GET_VERTEX... -> %p\n",
+                        (void *)reply_message);
+        printf("REGRESSION entries in cache: %d\n",
+                        (int)core_map_size(&self->entries));
+
+        thorium_cache_tag_print(&cache_tag);
+    }
+#endif
 
     /*
      * If the key is NULL, save the request message for later use.
@@ -196,10 +243,15 @@ void thorium_message_cache_save_reply_message(struct thorium_message_cache *self
         return;
     }
 
-    /*
-    printf("DEBUG thorium_message_cache_save_reply_message action %d\n",
-                    thorium_message_action(message));
-    */
+#ifdef TRACK_REGRESSION_2014_12_30
+    if (thorium_message_action(message) == ACTION_ASSEMBLY_GET_VERTEX_REPLY
+            && thorium_cache_tag_signature(&self->saved_reply_message_cache_tag) ==
+            TRACK_SIGNATURE) {
+        printf("REGRESSION thorium_message_cache_save_reply_message action ACTION_ASSEMBLY_GET_VERTEX_REPLY\n");
+        thorium_cache_tag_print(&self->saved_reply_message_cache_tag);
+    }
+#endif
+
     /*
      * Use the cache tag in self->saved_reply_message_cache_tag to add the reply
      * message in an entry.
@@ -248,8 +300,13 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
 
     action = thorium_message_action(message);
 
-    if (core_map_get(&self->actions, &action) == NULL)
+    if (core_map_get(&self->actions, &action) == NULL) {
+            /*
+        printf("DEBUG request action %d not managed by cache\n",
+                        action);
+                        */
         return;
+    }
 
     /*
      * At this point, the saved_reply_message_cache_tag may be already set.
@@ -260,9 +317,13 @@ void thorium_message_cache_save_request_message(struct thorium_message_cache *se
      */
     thorium_cache_tag_set(&self->saved_reply_message_cache_tag, message);
 
-    /*
-    thorium_cache_tag_print(&self->saved_reply_message_cache_tag);
-    */
+#ifdef TRACK_REGRESSION_2014_12_30
+    if (action == ACTION_ASSEMBLY_GET_VERTEX
+              && thorium_cache_tag_signature(&self->saved_reply_message_cache_tag) == TRACK_SIGNATURE) {
+        printf("REGRESSION saved request message ACTION_ASSEMBLY_GET_VERTEX\n");
+        thorium_cache_tag_print(&self->saved_reply_message_cache_tag);
+    }
+#endif
 }
 
 int thorium_message_cache_action_count(struct thorium_message_cache *self)
