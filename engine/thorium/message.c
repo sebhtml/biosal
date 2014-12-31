@@ -150,8 +150,7 @@ void thorium_message_set_action(struct thorium_message *self, int action)
 
 int thorium_message_metadata_size(struct thorium_message *self)
 {
-    return thorium_message_pack_unpack(self, CORE_PACKER_OPERATION_PACK_SIZE,
-                    NULL);
+    return THORIUM_MESSAGE_METADATA_SIZE;
 }
 
 int thorium_message_write_metadata(struct thorium_message *self)
