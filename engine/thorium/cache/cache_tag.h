@@ -35,4 +35,6 @@ int thorium_cache_tag_destination(struct thorium_cache_tag *self);
 void thorium_cache_tag_reset(struct thorium_cache_tag *self);
 void thorium_cache_tag_print(struct thorium_cache_tag *self);
 
+uint64_t thorium_cache_tag_signature(struct thorium_cache_tag *self);
+
 #endif

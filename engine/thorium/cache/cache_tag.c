@@ -61,3 +61,8 @@ int thorium_cache_tag_destination(struct thorium_cache_tag *self)
 {
     return self->destination;
 }
+
+uint64_t thorium_cache_tag_signature(struct thorium_cache_tag *self)
+{
+    return self->signature;
+}
