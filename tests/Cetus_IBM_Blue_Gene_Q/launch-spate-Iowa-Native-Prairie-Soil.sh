@@ -2,7 +2,7 @@
 
 center=alcf
 system=cetus
-nodes=512
+nodes=1024
 threads=16
 walltime=01:00:00
 
