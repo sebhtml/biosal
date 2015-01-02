@@ -13,8 +13,8 @@ queue=batch
 walltime=00:30:00
 
 build_script=tests/Beagle_Cray_XE6/build.sh
-app_path=performance/latency_probe/latency_probe
-job_template=tests/Beagle_Cray_XE6/Template.latency_probe.pbs
+app_path=applications/spate_metagenome_assembler/spate
+job_template=tests/Beagle_Cray_XE6/Template.spate.pbs
 
 root=/lustre/beagle2/CompBIO/automated-tests-beagle2
 dataset=/lustre/beagle2/CompBIO/Datasets/Wisconsin_Restored_Prairie_Soil
