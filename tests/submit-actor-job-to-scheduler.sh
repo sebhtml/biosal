@@ -60,6 +60,12 @@ sed -i "$template" $job.sh
 template="s/__THREADS__/$threads/g"
 sed -i "$template" $job.sh
 
+template="s/__ALLOCATION__/$allocation/g"
+sed -i "$template" $job.sh
+
+template="s/__QUEUE__/$queue/g"
+sed -i "$template" $job.sh
+
 $submit_command $job.sh > $job.job
 
 echo "Submitted build $job ($commit)"
