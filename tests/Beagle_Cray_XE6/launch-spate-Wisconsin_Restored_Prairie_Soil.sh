@@ -8,7 +8,7 @@ center=ci
 system=beagle2
 nodes=36
 threads=1152
-allocation=CI-DEB000002
+allocation=CI-CCR000040
 queue=batch
 walltime=00:30:00
 
