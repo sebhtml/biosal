@@ -10,7 +10,12 @@
 
 #define SCRIPT_UNITIG_MANAGER 0x3bf29ca1
 
+/*
+ * Enable the multiplexer code paths.
+ */
+/*
 #define CONFIG_UNITIG_USE_MULTIPLEXER
+*/
 
 /*
  * A manager for unitig walkers
