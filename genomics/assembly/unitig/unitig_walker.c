@@ -42,6 +42,12 @@
 #define SIGNATURE_SEED (0xd948c134)
 
 /*
+ * How many bases need to be in common before setting
+ * a duplicate state.
+ */
+#define RESOLUTION (512)
+
+/*
 #define DEBUG_SYNCHRONIZATION
 */
 
@@ -127,6 +133,8 @@ void biosal_unitig_walker_mark_vertex(struct thorium_actor *self, struct biosal_
 int biosal_unitig_walker_select_old_version(struct thorium_actor *self, int *output_status);
 void biosal_unitig_walker_normalize_cycle(struct thorium_actor *self, int length, char *sequence);
 void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, char *sequence);
+
+void biosal_unitig_walker_abort(struct thorium_actor *self, struct thorium_message *message);
 
 struct thorium_script biosal_unitig_walker_script = {
     .identifier = SCRIPT_UNITIG_WALKER,
@@ -527,6 +535,12 @@ void biosal_unitig_walker_get_starting_kmer_reply(struct thorium_actor *self, st
         return;
     }
 
+    /*
+     * Initialize the actor for walking in the graph now.
+     */
+
+    concrete_self->number_of_visited_vertices_in_common = 0;
+
     buffer = thorium_message_buffer(message);
 
     biosal_dna_kmer_init_empty(&concrete_self->current_kmer);
@@ -865,12 +879,16 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
     struct biosal_unitig_walker *concrete_self;
     struct biosal_assembly_vertex vertex;
     int last_actor;
-    int last_path_index;
     int name;
+    int abort_when_competing;
+
+    /*
+    int last_path_index;
     int length;
     int new_count;
     char *new_buffer;
     int position;
+    */
 
     concrete_self = thorium_actor_concrete_actor(self);
     buffer = thorium_message_buffer(message);
@@ -906,16 +924,34 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
     last_actor = biosal_assembly_vertex_last_actor(&vertex);
     name = thorium_actor_name(self);
 
+    abort_when_competing = 1;
+
     if (biosal_assembly_vertex_get_flag(&vertex, BIOSAL_VERTEX_FLAG_USED_BY_WALKER)
                     && last_actor != name) {
 
-        last_path_index = biosal_assembly_vertex_last_path_index(&vertex);
+        ++concrete_self->number_of_visited_vertices_in_common;
+
+        if (concrete_self->number_of_visited_vertices_in_common >= RESOLUTION
+                        && abort_when_competing) {
+            if (last_actor < name) {
+                thorium_actor_log(self, "aborting, in common: %d, other actor: %d\n",
+                                concrete_self->number_of_visited_vertices_in_common,
+                                last_actor);
+                biosal_unitig_walker_abort(self, NULL);
+            }
+        }
+    }
 #if 0
         /* ask the other actor about it.
          */
         thorium_actor_log(self, "actor/%d needs to ask actor/%d for solving BIOSAL_VERTEX_FLAG_USED\n",
-                        thorium_actor_name(self), actor);
-#endif
+                        thorium_actor_name(self), last_actor);
+
+        last_path_index = biosal_assembly_vertex_last_path_index(&vertex);
+
+        /*
+         * The disabled code block below is used to send a message. This is no longer required.
+         */
 
         length = biosal_unitig_walker_get_current_length(self);
 
@@ -946,11 +982,10 @@ void biosal_unitig_walker_get_vertex_reply(struct thorium_actor *self, struct th
 
         thorium_actor_send_buffer(self, last_actor, ACTION_NOTIFY, new_count,
                         new_buffer);
-
     } else {
+#endif
 
-        thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
-    }
+    thorium_actor_send_to_self_empty(self, ACTION_ASSEMBLY_GET_VERTICES_AND_SELECT);
 }
 
 void biosal_unitig_walker_notify(struct thorium_actor *self, struct thorium_message *message)
@@ -1412,11 +1447,29 @@ int biosal_unitig_walker_select(struct thorium_actor *self, int *output_status)
     int status;
     struct core_vector *selected_kmers;
     struct core_vector *selected_vertices;
+    struct biosal_path_status *bucket;
 
     choice = BIOSAL_HEURISTIC_CHOICE_NONE;
     status = STATUS_NO_STATUS;
 
     concrete_self = thorium_actor_concrete_actor(self);
+
+    /*
+     * Check the path status.
+     */
+    bucket = core_map_get(&concrete_self->path_statuses,
+                    &concrete_self->path_index);
+
+    if (bucket->status == PATH_STATUS_DEFEAT_WITH_CHALLENGER
+                    || bucket->status == PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE) {
+
+        choice = BIOSAL_HEURISTIC_CHOICE_NONE;
+        status = STATUS_DEFEAT;
+
+        *output_status = status;
+        return choice;
+    }
+
     /*ephemeral_memory = thorium_actor_get_ephemeral_memory(self);*/
 
     if (concrete_self->select_operation == OPERATION_SELECT_CHILD) {
@@ -2400,4 +2453,26 @@ void biosal_unitig_walker_select_strand(struct thorium_actor *self, int length, 
     biosal_dna_kmer_destroy(&kmer2, ephemeral_memory);
 }
 
+void biosal_unitig_walker_abort(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct biosal_path_status *bucket;
+    struct biosal_unitig_walker *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+    bucket = core_map_get(&concrete_self->path_statuses, &concrete_self->path_index);
+
+    CORE_DEBUGGER_ASSERT(bucket != NULL);
+
+    /*
+     * 2 defeats are necessary. The reason is that the ends of bubbles and tips
+     * are also marked, but meeting just one such marked vertex should not
+     * stop anything.
+     */
+    /*
+     * accept defeat.
+     */
+    /*
+    */
+    bucket->status = PATH_STATUS_DEFEAT_BY_FAILED_CHALLENGE;
+}
 

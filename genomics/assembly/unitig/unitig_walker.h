@@ -81,6 +81,8 @@ struct biosal_unitig_walker {
 
     int writer_process;
     int start_messages;
+
+    int number_of_visited_vertices_in_common;
 };
 
 extern struct thorium_script biosal_unitig_walker_script;
