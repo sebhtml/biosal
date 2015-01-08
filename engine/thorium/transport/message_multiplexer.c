@@ -466,13 +466,19 @@ int thorium_message_multiplexer_multiplex(struct thorium_message_multiplexer *se
     /*
      * Try to flush. This only flushes something if the buffer is full.
      */
+
     if (thorium_message_multiplexer_buffer_is_ready(self, real_multiplexed_buffer)) {
 
         /*
          * Try to flush here too. This is required in order to satisfy the
          * technical requirement of a DOA limit.
+         *
+         * Obviously, don't flush if there is some outbound traffic congestion.
+         * Otherwise, there will be too many messages on the network.
          */
-        thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
+        if (!thorium_worker_has_outbound_traffic_congestion(self->worker)) {
+            thorium_message_multiplexer_flush(self, destination_node, FORCE_YES_SIZE);
+        }
     }
 
     /*
@@ -703,6 +709,7 @@ void thorium_message_multiplexer_test(struct thorium_message_multiplexer *self)
     if (thorium_worker_has_outbound_traffic_congestion(self->worker)) {
         return;
     }
+
 #endif
 
 #ifdef DEBUG_MULTIPLEXER_TEST
