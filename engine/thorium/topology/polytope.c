@@ -51,6 +51,7 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
     int best_load;
     int next;
     int best_value = -1;
+    int use_dimension_ordered_routing;
 
 #ifdef VERBOSE_POLYTOPE
     printf("get_next source %d current %d destination %d\n",
@@ -58,6 +59,8 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
 #endif
 
     CORE_DEBUGGER_ASSERT(self->valid);
+
+    use_dimension_ordered_routing = 1;
 
     if (!self->valid)
         return -1;
@@ -89,6 +92,14 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
          */
         if (actual_value == desired_value)
             continue;
+
+        /*
+         * With dimension-ordered routing, we just pick up the first available dimension.
+         */
+        if (use_dimension_ordered_routing) {
+            best_position = position_in_tuple;
+            break;
+        }
 
         /*
          * Store the load.
