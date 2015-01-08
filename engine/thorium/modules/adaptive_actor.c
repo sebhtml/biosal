@@ -144,9 +144,11 @@ int thorium_actor_compute_count_small_messages_and_node_scope_log(struct thorium
     node_count = thorium_actor_get_node_count(self);
     constant = 400;
 
+#if 0
     if (node_count <= 16) {
         constant = 20;
     }
+#endif
 
     /*
      * Values for calibration.
