@@ -14,8 +14,8 @@
  * Enable the multiplexer code paths.
  */
 /*
-#define CONFIG_UNITIG_USE_MULTIPLEXER
 */
+#define CONFIG_UNITIG_USE_MULTIPLEXER
 
 /*
  * A manager for unitig walkers
