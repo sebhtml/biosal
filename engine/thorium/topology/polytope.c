@@ -60,7 +60,7 @@ int thorium_polytope_get_next_rank_in_route(struct thorium_polytope *self, int s
 
     CORE_DEBUGGER_ASSERT(self->valid);
 
-    use_dimension_ordered_routing = 1;
+    use_dimension_ordered_routing = 0;
 
     if (!self->valid)
         return -1;
