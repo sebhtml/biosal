@@ -5,6 +5,7 @@ echo "Push to mirror"
 (
 git checkout master
 git pull origin master
+git pull origin --tags
 git checkout mirror
 git merge master
 git push geneassembly mirror
