@@ -57,10 +57,39 @@ int main(int argc, char **argv)
     biosal_dna_kmer_destroy(&kmer, &pool);
     biosal_dna_kmer_destroy(&kmer2, &pool);
 
+    core_memory_free(buffer, -1);
+
+    {
+        char *sequence = "ATCGATCGAGTACTGCGTAGTCGTCGTACTGTGCGTCGTCGGCTGCAGTCTGCGTACTGCGTTAGCTGCAGTTCAGTCGAGTACTGCATGCAGTACATGGTAGACTACATCTGCATGACTGCATGACTGCATGCTGATGCATGCAGTAAGTCATCGAGTCTCAGATCGATGCACTGACTGTACGTGACTGACTGACTGACTG";
+        struct biosal_dna_kmer kmer;
+        int stores = 2048;
+        int store;
+        char kmer_sequence[34];
+        int kmer_length = 33;
+        int i;
+        int length;
+
+        length = strlen(sequence);
+
+        for (i = 0; i < length - kmer_length + 1; ++i) {
+
+            memcpy(kmer_sequence, sequence + i, kmer_length);
+            kmer_sequence[kmer_length] = '\0';
+
+            biosal_dna_kmer_init(&kmer, kmer_sequence, &codec, &pool);
+
+            store = biosal_dna_kmer_store_index(&kmer, stores, kmer_length,
+                        &codec, &pool);
+
+            biosal_dna_kmer_destroy(&kmer, &pool);
+
+            printf("Position %d DNA kmer %s Store %d\n", i,
+                            kmer_sequence, store);
+        }
+    }
+
     core_memory_pool_destroy(&pool);
     biosal_dna_codec_destroy(&codec);
-
-    core_memory_free(buffer, -1);
 
     END_TESTS();
 
