@@ -19,6 +19,12 @@
 
 #include <inttypes.h>
 
+int biosal_dna_kmer_store_index_poor_locality(struct biosal_dna_kmer *self, int stores, int kmer_length,
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory);
+
+int biosal_dna_kmer_store_index_lsh(struct biosal_dna_kmer *self, int stores, int kmer_length,
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory);
+
 /*
 #define BIOSAL_DNA_SEQUENCE_DEBUG
 */
@@ -245,8 +251,29 @@ uint64_t biosal_dna_kmer_hash(struct biosal_dna_kmer *self, int kmer_length,
 int biosal_dna_kmer_store_index(struct biosal_dna_kmer *self, int stores, int kmer_length,
                 struct biosal_dna_codec *codec, struct core_memory_pool *memory)
 {
+    return biosal_dna_kmer_store_index_lsh(self, stores, kmer_length, codec, memory);
+}
+
+int biosal_dna_kmer_store_index_poor_locality(struct biosal_dna_kmer *self, int stores, int kmer_length,
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory)
+{
     uint64_t hash;
     int store_index;
+
+    hash = biosal_dna_kmer_canonical_hash(self, kmer_length, codec, memory);
+
+    store_index = hash % stores;
+
+    return store_index;
+}
+
+int biosal_dna_kmer_store_index_lsh(struct biosal_dna_kmer *self, int stores, int kmer_length,
+                struct biosal_dna_codec *codec, struct core_memory_pool *memory)
+{
+    uint64_t hash;
+    int store_index;
+    int i;
+    int w;
 
     hash = biosal_dna_kmer_canonical_hash(self, kmer_length, codec, memory);
 
