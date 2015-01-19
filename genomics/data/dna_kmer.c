@@ -19,6 +19,10 @@
 
 #include <inttypes.h>
 
+/*
+*/
+#define USE_LSH
+
 int biosal_dna_kmer_store_index_poor_locality(struct biosal_dna_kmer *self, int stores, int kmer_length,
                 struct biosal_dna_codec *codec, struct core_memory_pool *memory);
 
@@ -251,7 +255,11 @@ uint64_t biosal_dna_kmer_hash(struct biosal_dna_kmer *self, int kmer_length,
 int biosal_dna_kmer_store_index(struct biosal_dna_kmer *self, int stores, int kmer_length,
                 struct biosal_dna_codec *codec, struct core_memory_pool *memory)
 {
+#ifdef USE_LSH
     return biosal_dna_kmer_store_index_lsh(self, stores, kmer_length, codec, memory);
+#else
+    return biosal_dna_kmer_store_index_poor_locality(self, stores, kmer_length, codec, memory);
+#endif
 }
 
 int biosal_dna_kmer_store_index_poor_locality(struct biosal_dna_kmer *self, int stores, int kmer_length,
@@ -274,10 +282,57 @@ int biosal_dna_kmer_store_index_lsh(struct biosal_dna_kmer *self, int stores, in
     int store_index;
     int i;
     int w;
+    uint64_t minimal_hash_value;
+    struct biosal_dna_kmer shingle;
+    char *substring;
+    char *sequence;
+    char character;
 
-    hash = biosal_dna_kmer_canonical_hash(self, kmer_length, codec, memory);
+    sequence = core_memory_pool_allocate(memory, kmer_length + 1);
 
-    store_index = hash % stores;
+    biosal_dna_kmer_get_sequence(self, sequence, kmer_length,
+        codec);
+
+    /*
+     * Generate a sketch of shingles for the kmer, and
+     * select the one with the minimal hash value.
+     */
+    w = 19;
+
+    if (kmer_length < w) {
+        w = kmer_length - 3;
+    }
+
+    minimal_hash_value = 0;
+    minimal_hash_value--;
+
+    /*
+     * Generate shingles, hash them, and pick up the best one.
+     */
+    for (i = 0; i < kmer_length - w + 1; ++i) {
+
+        substring = sequence + i;
+        character = substring[w];
+        substring[w] = '\0';
+
+        biosal_dna_kmer_init(&shingle, substring, codec, memory);
+        substring[w] = character;
+
+        hash = biosal_dna_kmer_canonical_hash(&shingle, w, codec, memory);
+
+        biosal_dna_kmer_destroy(&shingle, memory);
+
+        if (hash < minimal_hash_value)
+            minimal_hash_value = hash;
+    }
+
+    core_memory_pool_free(memory, sequence);
+
+    /*
+     * Determine the store index using the hash of the shingle that has
+     * the minimal hash value.
+     */
+    store_index = minimal_hash_value % stores;
 
     return store_index;
 }
@@ -463,3 +518,4 @@ void biosal_dna_kmer_init_as_parent(struct biosal_dna_kmer *self, struct biosal_
     biosal_dna_kmer_init_copy(self, other, kmer_length, memory, codec);
     biosal_dna_codec_mutate_as_parent(codec, kmer_length, self->encoded_data, code);
 }
+

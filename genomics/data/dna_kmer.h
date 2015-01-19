@@ -44,6 +44,10 @@ void biosal_dna_kmer_init_as_parent(struct biosal_dna_kmer *self, struct biosal_
 
 void biosal_dna_kmer_print(struct biosal_dna_kmer *self, int kmer_length, struct biosal_dna_codec *codec,
                 struct core_memory_pool *memory);
+
+/*
+ * Get the DNA sequence of the k-mer.
+ */
 void biosal_dna_kmer_get_sequence(struct biosal_dna_kmer *self, char *sequence, int kmer_length,
         struct biosal_dna_codec *codec);
 
