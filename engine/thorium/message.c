@@ -470,3 +470,13 @@ uint64_t thorium_message_signature(struct thorium_message *self)
 
     return core_hash_data_uint64_t(buffer, count, MESSAGE_SIGNATURE_SEED);
 }
+
+void thorium_message_set_routing_destination_node(struct thorium_message *self, int destination)
+{
+    self->routing_destination = destination;
+}
+
+void thorium_message_set_routing_source_node(struct thorium_message *self, int source)
+{
+    self->routing_source = source;
+}

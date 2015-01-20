@@ -2787,12 +2787,4 @@ int thorium_worker_has_reached_maximum_outbound_throughput(struct thorium_worker
     return thorium_node_has_reached_maximum_outbound_throughput(self->node);
 }
 
-void thorium_message_set_routing_destination_node(struct thorium_message *self, int destination)
-{
-    self->routing_destination = destination;
-}
 
-void thorium_message_set_routing_source_node(struct thorium_message *self, int source)
-{
-    self->routing_source = source;
-}
