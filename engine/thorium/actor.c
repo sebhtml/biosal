@@ -537,7 +537,6 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         return;
 
     ++self->counter_sent_message_count;
-
     thorium_actor_increment_event_counter(self, THORIUM_EVENT_ACTOR_SEND);
 
     /*
@@ -2540,11 +2539,24 @@ int thorium_actor_get_counter_value(struct thorium_actor *self, int field)
 {
     if (field == CORE_COUNTER_RECEIVED_MESSAGES)
         return self->counter_received_message_count;
-
-    if (field == CORE_COUNTER_SENT_MESSAGES)
+    else if (field == CORE_COUNTER_SENT_MESSAGES)
         return self->counter_sent_message_count;
+    else if (field == CORE_COUNTER_SENT_MESSAGES_LOCAL)
+        return self->counter_sent_message_count_local;
+    else if (field == CORE_COUNTER_SENT_MESSAGES_REMOTE)
+        return self->counter_sent_message_count_remote;
 
     return 0;
+}
+
+void thorium_actor_increment_counter(struct thorium_actor *self, int event)
+{
+    CORE_DEBUGGER_ASSERT(self != NULL);
+
+    if (event == CORE_COUNTER_SENT_MESSAGES_LOCAL)
+        ++self->counter_sent_message_count_local;
+    else if (event == CORE_COUNTER_SENT_MESSAGES_REMOTE)
+        ++self->counter_sent_message_count_remote;
 }
 
 void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message *message)
@@ -2658,3 +2670,14 @@ void thorium_actor_increment_event_counter(struct thorium_actor *self, int event
 
     thorium_worker_increment_event_counter(self->worker, event);
 }
+
+void thorium_actor_print_communication_report(struct thorium_actor *self)
+{
+    printf("Script: %s Name: %d local sends: %d remote sends: %d\n",
+                    thorium_actor_script_name(self),
+                    thorium_actor_name(self),
+                    thorium_actor_get_counter_value(self, CORE_COUNTER_SENT_MESSAGES_LOCAL),
+                    thorium_actor_get_counter_value(self, CORE_COUNTER_SENT_MESSAGES_REMOTE));
+}
+
+

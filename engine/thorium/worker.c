@@ -162,7 +162,7 @@ void thorium_worker_init(struct thorium_worker *worker, int name, struct thorium
     /*
     thorium_message_block_init(&worker->message_block);
     */
-
+    worker->current_actor = NULL;
     worker->tick_count = 0;
 
     argc = thorium_node_argc(node);
@@ -502,6 +502,8 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
     struct thorium_actor *destination_actor;
 #endif
 
+    struct thorium_worker *self = worker;
+
     /*
      * Make a copy of the message to avoid side effects.
      */
@@ -638,11 +640,20 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
 #endif
 
     /*
+     * The destination is local.
+     */
+    if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
+
+         thorium_worker_send_local_delivery(worker, message);
+
+         thorium_actor_increment_counter(self->current_actor, CORE_COUNTER_SENT_MESSAGES_LOCAL);
+
+    /*
      * Small messages use a different delivery path in which batching is performed.
      *
      * Batching is also called aggregation or multiplexing.
      */
-    if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_USE_MULTIPLEXER)
+    } else if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_USE_MULTIPLEXER)
                     && thorium_message_multiplexer_message_should_be_multiplexed(&worker->multiplexer, message)) {
 
         /*
@@ -660,17 +671,10 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
             /*
         */
 
-        if (thorium_message_destination_node(message) == thorium_message_source_node(message)) {
-
-             thorium_worker_send_local_delivery(worker, message);
-
-        } else {
-
-            /*
-             * Queue the message for multiplexing.
-             */
-            thorium_worker_send_for_multiplexer(worker, message);
-        }
+        /*
+         * Queue the message for multiplexing.
+         */
+        thorium_worker_send_for_multiplexer(worker, message);
     } else {
     /*
     thorium_worker_enqueue_message(worker, message);
@@ -679,7 +683,13 @@ void thorium_worker_send(struct thorium_worker *worker, struct thorium_message *
          * The message will use the fast path for delivery
          * because it is large enough.
          */
+
+        CORE_DEBUGGER_ASSERT(thorium_message_source_node(message) !=
+                        thorium_message_destination_node(message));
+
         thorium_worker_send_to_other_node(worker, message);
+
+        thorium_actor_increment_counter(self->current_actor, CORE_COUNTER_SENT_MESSAGES_REMOTE);
     }
 }
 
@@ -1907,6 +1917,7 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
     /* call the actor receive code
      */
     thorium_actor_set_worker(actor, worker);
+    worker->current_actor = actor;
 
     if (thorium_actor_multiplexer_is_enabled(actor)) {
         CORE_BITMAP_SET_FLAG(worker->flags, FLAG_USE_MULTIPLEXER);
@@ -1934,6 +1945,7 @@ static void thorium_worker_work(struct thorium_worker *worker, struct thorium_ac
     }
 
     thorium_actor_set_worker(actor, NULL);
+    worker->current_actor = NULL;
 
 #ifdef THORIUM_WORKER_DEBUG_20140601
     if (CORE_BITMAP_GET_FLAG(worker->flags, FLAG_DEBUG)) {
@@ -2634,6 +2646,8 @@ int thorium_worker_send_for_multiplexer(struct thorium_worker *self,
 static void thorium_worker_send_to_other_node(struct thorium_worker *self,
                 struct thorium_message *message)
 {
+
+
    /*
     * Publish the message on the ring. If that fails, put the message in the
     * overflow queue.

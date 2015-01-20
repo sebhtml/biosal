@@ -374,6 +374,8 @@ struct thorium_actor {
 
     int counter_received_message_count;
     int counter_sent_message_count;
+    int counter_sent_message_count_local;
+    int counter_sent_message_count_remote;
 };
 
 void thorium_actor_init(struct thorium_actor *self, void *state,
@@ -521,5 +523,9 @@ int thorium_actor_get_counter_value(struct thorium_actor *self, int field);
 int thorium_actor_get_flag(struct thorium_actor *self, int flag);
 void thorium_actor_set_flag(struct thorium_actor *self, int flag);
 void thorium_actor_clear_flag(struct thorium_actor *self, int flag);
+
+void thorium_actor_print_communication_report(struct thorium_actor *self);
+
+void thorium_actor_increment_counter(struct thorium_actor *self, int event);
 
 #endif
