@@ -63,6 +63,8 @@ struct biosal_unitig_visitor {
     struct biosal_dna_kmer local_kmer;
     int has_local_kmer;
     int length_of_locality;
+
+    int has_local_actors;
 };
 
 extern struct thorium_script biosal_unitig_visitor_script;

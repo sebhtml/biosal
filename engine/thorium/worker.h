@@ -116,6 +116,8 @@ struct thorium_balancer;
  * This is similar to worker threads in linux ([kworker/0] [kworker/1])
  */
 struct thorium_worker {
+
+    struct thorium_actor *current_actor;
     struct core_buffered_file_writer load_profile_writer;
     struct thorium_node *node;
 

@@ -62,16 +62,19 @@ void biosal_unitig_manager_init(struct thorium_actor *self)
     concrete_self->vertices_with_unitig_flag = 0;
 
 #ifdef CONFIG_UNITIG_USE_MULTIPLEXER
+    /*
     concrete_self->visitor_count_per_worker = thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
+               */
 
     concrete_self->walker_count_per_worker = thorium_actor_get_suggested_actor_count(self,
                THORIUM_ADAPTATION_FLAG_SMALL_MESSAGES | THORIUM_ADAPTATION_FLAG_SCOPE_WORKER);
 
 #else
-    concrete_self->visitor_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
     concrete_self->walker_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
 #endif
+
+    concrete_self->visitor_count_per_worker = THORIUM_LIGHTWEIGHT_ACTOR_COUNT_PER_WORKER;
 
     CORE_DEBUGGER_ASSERT(concrete_self->visitor_count_per_worker >= 1);
 
@@ -258,6 +261,11 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
         concrete_self->completed = 0;
         thorium_actor_send_range_vector(self, &concrete_self->visitors,
                         ACTION_START, &concrete_self->graph_stores);
+
+/*
+        printf("graph store list:\n");
+        core_vector_print_int(&concrete_self->graph_stores);
+        */
 
         /*
          * Also, enable the verbose mode for one visitor on each node.
