@@ -63,6 +63,9 @@ void biosal_unitig_visitor_init(struct thorium_actor *self)
     struct biosal_unitig_visitor *concrete_self;
 
     concrete_self = (struct biosal_unitig_visitor *)thorium_actor_concrete_actor(self);
+
+    concrete_self->has_local_actors = 1;
+
     core_memory_pool_init(&concrete_self->memory_pool, 131072,
                     MEMORY_POOL_NAME_VISITOR);
 
@@ -115,6 +118,8 @@ void biosal_unitig_visitor_destroy(struct thorium_actor *self)
 
     thorium_actor_log(self, "vertex_count: %d BIOSAL_VERTEX_FLAG_UNITIG: %d",
                     concrete_self->visited_vertices, concrete_self->vertices_with_unitig_flag);
+
+    thorium_actor_print_communication_report(self);
 
     if (thorium_actor_get_flag(self, LOG_LEVEL_DEFAULT)) {
         thorium_actor_print_message_cache(self);
@@ -181,7 +186,7 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
     if (tag == ACTION_START) {
 
-#ifdef CONFIG_UNITIG_USE_MULTIPLEXER
+#ifdef CONFIG_UNITIG_USE_MULTIPLEXER_disabled
         thorium_actor_send_to_self_empty(self, ACTION_ENABLE_MULTIPLEXER);
 #endif
 
@@ -775,13 +780,16 @@ int biosal_unitig_visitor_get_graph_store_index(struct thorium_actor *self)
     int graph_store_index;
     struct biosal_unitig_visitor *concrete_self;
     int size;
+    int lower_bound;
+    int upper_bound;
+    int node;
+    int workers_per_node;
 
     concrete_self = thorium_actor_concrete_actor(self);
 
     size = core_vector_size(&concrete_self->graph_stores);
 
     if (concrete_self->graph_store_index == -1) {
-
         concrete_self->graph_store_index = thorium_actor_get_random_number(self) % size;
     }
 
@@ -789,14 +797,53 @@ int biosal_unitig_visitor_get_graph_store_index(struct thorium_actor *self)
     ++concrete_self->graph_store_index;
 
     /*
+     * Enforce bounds.
+     */
+    lower_bound = 0;
+    upper_bound = size - 1;
+
+    node = thorium_actor_node_name(self);
+    workers_per_node = thorium_actor_node_worker_count(self);
+
+    /*
+     * Try to use local actors whenever possible...
+     * To do this, just change the bounds.
+     */
+    if (concrete_self->has_local_actors) {
+
+        /*
+         * It is assumed that the system runs in symmetric mode. (The assumption
+         * is that each node has the same number of workers.)
+         */
+        lower_bound = node * workers_per_node;
+        upper_bound = lower_bound + workers_per_node - 1;
+    }
+
+    /*
      * Reset the index.
      * Also, reset the number of graph stores that have nothing more to yield
      * to avoid a false ending.
      */
-    if (concrete_self->graph_store_index == size) {
-        concrete_self->graph_store_index = 0;
+    if (concrete_self->graph_store_index > upper_bound) {
+        concrete_self->graph_store_index = lower_bound;
+
+        /*
+         * Go outside the current node.
+         */
+        if (concrete_self->has_local_actors
+                        && concrete_self->completed >= workers_per_node) {
+            concrete_self->has_local_actors = 0;
+        }
+
         concrete_self->completed = 0;
     }
+
+    /*
+    printf("DEBUG actor %d get_graph_store_index has_local_actors %d lower_bound %d upper_bound %d index %d\n",
+                    thorium_actor_name(self), concrete_self->has_local_actors,
+                    lower_bound, upper_bound,
+                    graph_store_index);
+                    */
 
     return graph_store_index;
 }
