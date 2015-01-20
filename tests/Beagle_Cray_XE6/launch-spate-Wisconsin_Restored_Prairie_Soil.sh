@@ -10,7 +10,7 @@ nodes=36
 threads=1152
 allocation=CI-CCR000040
 queue=batch
-walltime=00:30:00
+walltime=03:00:00
 
 build_script=tests/Beagle_Cray_XE6/build.sh
 app_path=applications/spate_metagenome_assembler/spate
