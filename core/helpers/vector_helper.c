@@ -82,16 +82,23 @@ void core_vector_print_int(struct core_vector *self)
     size = core_vector_size(self);
     i = 0;
 
+    /*
     printf("[");
+    */
+
     while (i < size) {
 
+            /*
         if (i > 0) {
             printf(", ");
         }
-        printf("%d: %d", (int)i, core_vector_at_as_int(self, i));
+        */
+        printf("%d: %d\n", (int)i, core_vector_at_as_int(self, i));
         i++;
     }
+    /*
     printf("]");
+    */
 }
 
 void core_vector_set_int(struct core_vector *self, int64_t index, int value)
