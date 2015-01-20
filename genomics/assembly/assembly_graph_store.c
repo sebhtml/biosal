@@ -232,6 +232,7 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
                         &concrete_self->persistent_memory);
 
         thorium_actor_log(self, "DEBUG big_key_size %d big_value_size %d\n", big_key_size, big_value_size);
+        thorium_actor_log(self, " node %d", thorium_actor_node_name(self));
 
         /*
          * Configure the map for better performance.
