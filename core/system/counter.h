@@ -34,6 +34,13 @@
 #define CORE_COUNTER_BALANCE_BYTES 105
 #define CORE_COUNTER_BALANCE_ACTORS 200
 
+/*
+ * Other
+ */
+
+#define CORE_COUNTER_SENT_MESSAGES_LOCAL    400
+#define CORE_COUNTER_SENT_MESSAGES_REMOTE   500
+
 struct core_counter {
     int64_t counters[CORE_COUNTER_MAXIMUM];
 };
