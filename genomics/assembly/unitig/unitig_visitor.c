@@ -46,6 +46,8 @@ void biosal_unitig_visitor_mark_vertex(struct thorium_actor *self, struct biosal
 void biosal_unitig_visitor_set_locality_kmer(struct thorium_actor *self,
                 struct biosal_assembly_vertex *vertex);
 
+int biosal_unitig_visitor_get_graph_store_index(struct thorium_actor *self);
+
 struct thorium_script biosal_unitig_visitor_script = {
     .identifier = SCRIPT_UNITIG_VISITOR,
     .name = "biosal_unitig_visitor",
@@ -199,7 +201,7 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
 
         core_vector_unpack(&concrete_self->graph_stores, buffer);
         size = core_vector_size(&concrete_self->graph_stores);
-        concrete_self->graph_store_index = thorium_actor_get_random_number(self) % size;
+        concrete_self->graph_store_index = biosal_unitig_visitor_get_graph_store_index(self);
 
         concrete_self->step = STEP_GET_KMER_LENGTH;
         biosal_unitig_visitor_execute(self);
@@ -327,21 +329,11 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 
     } else if (concrete_self->step == STEP_GET_MAIN_KMER) {
 
+
         /*
          * Get a starting kmer from one of the graph stores.
          */
-        graph_store_index = concrete_self->graph_store_index;
-        ++concrete_self->graph_store_index;
-
-        /*
-         * Reset the index.
-         * Also, reset the number of graph stores that have nothing more to yield
-         * to avoid a false ending.
-         */
-        if (concrete_self->graph_store_index == size) {
-            concrete_self->graph_store_index = 0;
-            concrete_self->completed = 0;
-        }
+        graph_store_index = biosal_unitig_visitor_get_graph_store_index(self);
 
         graph_store = core_vector_at_as_int(&concrete_self->graph_stores, graph_store_index);
 
@@ -776,4 +768,35 @@ void biosal_unitig_visitor_set_locality_kmer(struct thorium_actor *self,
         concrete_self->has_local_kmer = FALSE;
     }
 #endif
+}
+
+int biosal_unitig_visitor_get_graph_store_index(struct thorium_actor *self)
+{
+    int graph_store_index;
+    struct biosal_unitig_visitor *concrete_self;
+    int size;
+
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    size = core_vector_size(&concrete_self->graph_stores);
+
+    if (concrete_self->graph_store_index == -1) {
+
+        concrete_self->graph_store_index = thorium_actor_get_random_number(self) % size;
+    }
+
+    graph_store_index = concrete_self->graph_store_index;
+    ++concrete_self->graph_store_index;
+
+    /*
+     * Reset the index.
+     * Also, reset the number of graph stores that have nothing more to yield
+     * to avoid a false ending.
+     */
+    if (concrete_self->graph_store_index == size) {
+        concrete_self->graph_store_index = 0;
+        concrete_self->completed = 0;
+    }
+
+    return graph_store_index;
 }
