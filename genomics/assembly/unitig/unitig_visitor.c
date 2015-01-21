@@ -30,8 +30,14 @@
 #define MEMORY_POOL_NAME_VISITOR 0x185945f7
 
 /*
-*/
+ * This flag increase the locality of queries in the graph.
+ * However with the new locality-sensitive hashing code this
+ * is not required anymore.
+ */
+/*
 #define CONFIG_VISITOR_INCREASE_LOCALITY
+*/
+
 #define CONFIG_VISITOR_LOCALITY_WIDTH 8192
 
 #define CONFIG_VISITOR_USE_MESSAGE_CACHE
