@@ -383,7 +383,6 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     float sum;
     char loop[] = "COMPUTATION";
     char epoch[] = "EPOCH";
-    char *description;
     float load;
     double input_throughput;
     double output_throughput;
@@ -391,12 +390,9 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     uint64_t nanoseconds;
     uint64_t elapsed_nanoseconds;
 
-    description = NULL;
 
     if (type == THORIUM_WORKER_POOL_LOAD_LOOP) {
-        description = loop;
     } else if (type == THORIUM_WORKER_POOL_LOAD_EPOCH) {
-        description = epoch;
     } else {
         return;
     }

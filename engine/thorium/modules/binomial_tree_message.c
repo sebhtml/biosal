@@ -18,7 +18,6 @@ void thorium_actor_send_range_binomial_tree_part(struct thorium_actor *actor,
 void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struct thorium_message *message)
 {
     char *buffer;
-    int count;
     int amount;
     int limit;
     int offset;
@@ -40,7 +39,6 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
     CORE_DEBUGGER_LEAK_DETECTION_BEGIN(ephemeral_memory, binomial_send);
 
     limit = BINOMIAL_TREE_MINIMUM;
-    count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
 
     offset = 0;
