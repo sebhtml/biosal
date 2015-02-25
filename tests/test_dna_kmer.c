@@ -19,6 +19,10 @@ int main(int argc, char **argv)
     int kmer_length;
     char sequence[] = "ATGATCTGCAGTACTGAC";
 
+    int verbose;
+
+    verbose = 0;
+
     BEGIN_TESTS();
 
     kmer_length = strlen(sequence);
@@ -83,7 +87,8 @@ int main(int argc, char **argv)
 
             biosal_dna_kmer_destroy(&kmer, &pool);
 
-            printf("Position %d DNA kmer %s Store %d\n", i,
+            if (verbose)
+                printf("Position %d DNA kmer %s Store %d\n", i,
                             kmer_sequence, store);
         }
     }
