@@ -117,6 +117,6 @@ clone: examples/example_clone
 migration: examples/example_migration
 	mpiexec -n 3 $< -threads-per-node 5 -print-thorium-data
 
-#include examples/*/Makefile.mk
+include examples/*/Makefile.mk
 
 
