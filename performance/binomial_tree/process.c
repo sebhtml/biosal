@@ -46,7 +46,6 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     void *buffer;
     int source;
     struct process *concrete_self;
-    int count;
     int name;
     int leader;
 
@@ -55,7 +54,6 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     action = thorium_message_action(message);
     buffer = thorium_message_buffer(message);
     source = thorium_message_source(message);
-    count = thorium_message_count(message);
 
     if (action == ACTION_START)
     {

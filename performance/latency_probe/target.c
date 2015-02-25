@@ -37,17 +37,11 @@ static void target_destroy(struct thorium_actor *self)
 static void target_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int action;
-    void *buffer;
     struct target *concrete_self;
-    int source;
-    int count;
     int name;
 
     concrete_self = (struct target *)thorium_actor_concrete_actor(self);
     action = thorium_message_action(message);
-    buffer = thorium_message_buffer(message);
-    source = thorium_message_source(message);
-    count = thorium_message_count(message);
     name = thorium_actor_name(self);
 
     if (action == ACTION_ASK_TO_STOP) {
