@@ -55,7 +55,7 @@ void thorium_actor_receive_binomial_tree_send(struct thorium_actor *actor, struc
     real_buffer = buffer + offset;
     offset += real_count;
 
-    CORE_DEBUGGER_ASSERT(offset == count);
+    CORE_DEBUGGER_ASSERT(offset == thorium_message_count(message));
 
     amount = core_vector_size(&actors);
 

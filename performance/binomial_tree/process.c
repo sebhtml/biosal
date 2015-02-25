@@ -49,6 +49,10 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     int name;
     int leader;
 
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
+    int count = thorium_message_count(message);
+#endif
+
     name = thorium_actor_name(self);
     concrete_self = (struct process *)thorium_actor_concrete_actor(self);
     action = thorium_message_action(message);
@@ -57,7 +61,7 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
 
     if (action == ACTION_START)
     {
-        CORE_DEBUGGER_ASSERT(count != 0);
+        CORE_DEBUGGER_ASSERT(thorium_message_count(message) != 0);
         CORE_DEBUGGER_ASSERT(buffer != NULL);
 
         core_vector_unpack(&concrete_self->initial_actors, buffer);

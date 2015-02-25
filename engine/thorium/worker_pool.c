@@ -381,8 +381,10 @@ void thorium_worker_pool_print_load(struct thorium_worker_pool *self, int type)
     float selected_load;
     uint64_t selected_wake_up_count;
     float sum;
+    /*
     char loop[] = "COMPUTATION";
     char epoch[] = "EPOCH";
+    */
     float load;
     double input_throughput;
     double output_throughput;

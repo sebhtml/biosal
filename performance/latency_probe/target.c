@@ -40,6 +40,10 @@ static void target_receive(struct thorium_actor *self, struct thorium_message *m
     struct target *concrete_self;
     int name;
 
+#ifdef CORE_DEBUGGER_ASSERT_ENABLED
+    int count = thorium_message_count(message);
+#endif
+
     concrete_self = (struct target *)thorium_actor_concrete_actor(self);
     action = thorium_message_action(message);
     name = thorium_actor_name(self);
@@ -61,7 +65,7 @@ static void target_receive(struct thorium_actor *self, struct thorium_message *m
         ++concrete_self->received;
 
 #ifdef CORE_DEBUGGER_ASSERT_ENABLED
-        if (count != 0) {
+        if (thorium_message_count(message) != 0) {
             printf("Error, count is %d but should be %d.\n",
                             count, 0);
 
@@ -70,7 +74,7 @@ static void target_receive(struct thorium_actor *self, struct thorium_message *m
 #endif
 
         CORE_DEBUGGER_ASSERT_IS_EQUAL_INT(count, 0);
-        CORE_DEBUGGER_ASSERT_IS_NULL(buffer);
+        CORE_DEBUGGER_ASSERT_IS_NULL(thorium_message_buffer(message));
 
         thorium_actor_send_reply_empty(self, ACTION_PING_REPLY);
 

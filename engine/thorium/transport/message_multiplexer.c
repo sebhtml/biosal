@@ -525,7 +525,6 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
     int source_node;
     int destination_node;
     int current_node;
-    int routing_source;
     int routing_destination;
 
 #ifdef DEBUG_MULTIPLEXER
@@ -620,7 +619,6 @@ int thorium_message_multiplexer_demultiplex(struct thorium_message_multiplexer *
 
         current_node = self->node->name;
         routing_destination = new_message.routing_destination;
-        routing_source = new_message.routing_source;
 
         CORE_DEBUGGER_ASSERT(routing_destination >= 0);
 

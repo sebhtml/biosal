@@ -152,16 +152,13 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
     void *buffer;
     int source;
     struct biosal_unitig_visitor *concrete_self;
-    int size;
     int count;
-    int action;
 
     tag = thorium_message_action(message);
     count = thorium_message_count(message);
     buffer = thorium_message_buffer(message);
     concrete_self = thorium_actor_concrete_actor(self);
     source = thorium_message_source(message);
-    action = tag;
 
     if (concrete_self->step == STEP_GET_MAIN_VERTEX_DATA) {
         if (biosal_vertex_neighborhood_receive(&concrete_self->main_neighborhood, message)) {
@@ -211,7 +208,6 @@ void biosal_unitig_visitor_receive(struct thorium_actor *self, struct thorium_me
         thorium_actor_log(self, "%s", "is ready to visit places in the universe");
 
         core_vector_unpack(&concrete_self->graph_stores, buffer);
-        size = core_vector_size(&concrete_self->graph_stores);
         concrete_self->graph_store_index = biosal_unitig_visitor_get_graph_store_index(self);
 
         concrete_self->step = STEP_GET_KMER_LENGTH;
@@ -277,7 +273,6 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
 {
     int graph_store_index;
     int graph_store;
-    int size;
     struct core_vector coverages;
     int coverage;
     struct biosal_assembly_vertex *other_vertex;
@@ -301,7 +296,6 @@ void biosal_unitig_visitor_execute(struct thorium_actor *self)
     int new_count;
 
     concrete_self = thorium_actor_concrete_actor(self);
-    size = core_vector_size(&concrete_self->graph_stores);
     ephemeral_memory = thorium_actor_get_ephemeral_memory(self);
 
 #if 0

@@ -16,7 +16,9 @@ void test_allocator(struct core_memory_pool *memory)
     void *pointer;
     struct core_vector vector;
     struct core_timer timer;
+#ifdef VERBOSE
     uint64_t elapsed;
+#endif
 
     i = 1000000;
     size = 45;
@@ -37,9 +39,9 @@ void test_allocator(struct core_memory_pool *memory)
     }
 
     core_timer_stop(&timer);
+#ifdef VERBOSE
     elapsed = core_timer_get_elapsed_nanoseconds(&timer);
 
-#ifdef VERBOSE
     if (memory == NULL) {
         printf("Not using memory pool... ");
     } else {

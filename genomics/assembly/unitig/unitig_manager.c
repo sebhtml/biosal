@@ -333,10 +333,8 @@ void biosal_unitig_manager_receive_answer_from_visitor(struct thorium_actor *sel
     int processed_vertices;
     int vertices_with_unitig_flag;
     struct biosal_unitig_manager *concrete_self;
-    void *buffer;
     int offset;
 
-    buffer = thorium_message_buffer(message);
     offset = 0;
 
     concrete_self = (struct biosal_unitig_manager *)thorium_actor_concrete_actor(self);

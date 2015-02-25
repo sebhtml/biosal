@@ -95,7 +95,6 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     struct process *concrete_self;
     struct core_vector actors;
     int name;
-    int count;
     int nodes;
     int number_of_actors;
     int workers;
@@ -107,7 +106,6 @@ static void process_receive(struct thorium_actor *self, struct thorium_message *
     buffer = thorium_message_buffer(message);
     source = thorium_message_source(message);
     name = thorium_actor_name(self);
-    count = thorium_message_count(message);
     worker_count = thorium_actor_node_worker_count(self);
 
     if (action == ACTION_START) {

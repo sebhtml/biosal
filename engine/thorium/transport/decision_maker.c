@@ -25,9 +25,6 @@ int thorium_decision_maker_is_better(struct thorium_decision_maker *self,
 void thorium_decision_maker_init(struct thorium_decision_maker *self)
 {
     int i;
-    int size;
-
-    size = THORIUM_DECISION_MAKER_ARRAY_SIZE;
 
     for (i = THORIUM_TIMEOUT_MINIMUM_VALUE; i <= THORIUM_TIMEOUT_MAXIMUM_VALUE; i += THORIUM_TIMEOUT_STRIDE_VALUE) {
         thorium_decision_maker_set_throughput(self, i, NO_MPS);

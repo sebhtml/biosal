@@ -58,13 +58,11 @@ void hello_acq_receive(struct thorium_actor *actor, struct thorium_message *mess
     void *buffer;
     struct hello_acq *hello1;
     int i;
-    int source;
 
     hello1 = (struct hello_acq *)thorium_actor_concrete_actor(actor);
     tag = thorium_message_action(message);
     name = thorium_actor_name(actor);
     buffer = thorium_message_buffer(message);
-    source = thorium_message_source(message);
 
     if (tag == ACTION_START) {
         core_vector_unpack(&hello1->initial_helloes, buffer);
