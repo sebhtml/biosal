@@ -101,7 +101,7 @@ void thorium_message_print(struct thorium_message *self)
                     " SourceNode %d DestinationNode %d"
                     " RoutingSourceNode %d RoutingDestinationNode %d\n"
                     " Type %d Worker %d",
-                    self->number,
+                    self->message_identifier,
                     self->action,
                     self->count,
                     self->buffer,
@@ -262,7 +262,7 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
     core_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
     core_packer_process(&packer, &self->action, sizeof(self->action));
-    core_packer_process(&packer, &self->number, sizeof(self->number));
+    core_packer_process(&packer, &self->message_identifier, sizeof(self->message_identifier));
 
 #ifdef THORIUM_MESSAGE_USE_ROUTING
     core_packer_process(&packer, &self->routing_source, sizeof(self->routing_source));
@@ -424,7 +424,7 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self)
 
 void thorium_message_set_number(struct thorium_message *self, int number)
 {
-    self->number = number;
+    self->message_identifier = number;
 }
 
 void thorium_message_add_metadata_to_count(struct thorium_message *self)

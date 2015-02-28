@@ -96,7 +96,13 @@
  */
 struct thorium_message {
     int action;
-    int number;
+
+    /*
+     * Message identifiers.
+     */
+    int message_identifier;
+    int parent_message_identifier;
+
     void *buffer;
     int count;
 
