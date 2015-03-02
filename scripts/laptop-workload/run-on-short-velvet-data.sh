@@ -1,16 +1,13 @@
 #!/bin/bash
 
-if ! test -f applications/spate_metagenome_assembler/spate
-then
-    make -j
-fi
+make -j applications/spate_metagenome_assembler/spate
 
 if ! test -d velvet
 then
     git clone https://github.com/dzerbino/velvet.git
 fi
 
-if test -f -d spate_output
+if test -d spate_output
 then
     rm -rf spate_output
 fi
