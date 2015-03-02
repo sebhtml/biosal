@@ -5,10 +5,15 @@
 
 #include <core/structures/vector.h>
 
+#include <stdio.h>
+
 #define REPEAT_MULTIPLIER 8
 
 #define SUPER_CAREFUL_WITH_MULTIPLIER
 #define SUPER_CAREFUL_WITH_THRESHOLD
+
+void biosal_unitig_heuristic_print_structure(struct biosal_unitig_heuristic *self,
+                int coverage, struct core_vector *values, int choice);
 
 int biosal_unitig_heuristic_select_highest(struct biosal_unitig_heuristic *self,
                 int current_coverage, struct core_vector *coverage_values);
@@ -47,6 +52,11 @@ int biosal_unitig_heuristic_select(struct biosal_unitig_heuristic *self,
             choice = BIOSAL_HEURISTIC_CHOICE_NONE;
         }
     }
+
+    /*
+    if (choice == BIOSAL_HEURISTIC_CHOICE_NONE)
+        biosal_unitig_heuristic_print_structure(self, current_coverage, coverage_values, choice);
+        */
 
     return choice;
 }
@@ -186,4 +196,18 @@ int biosal_unitig_heuristic_select_with_flow_split(struct biosal_unitig_heuristi
     }
 
     return choice;
+}
+
+void biosal_unitig_heuristic_print_structure(struct biosal_unitig_heuristic *self,
+                int coverage, struct core_vector *values, int choice)
+{
+    int i;
+
+    printf("DEBUG -> %d,", coverage);
+
+    for (i = 0; i < core_vector_size(values); ++i) {
+        printf(" %d", core_vector_at_as_int(values, i));
+    }
+
+    printf(" choice: %d\n", choice);
 }
