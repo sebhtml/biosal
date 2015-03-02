@@ -64,6 +64,8 @@ void hello_receive(struct thorium_actor *self, struct thorium_message *message)
 
     if (action == ACTION_START) {
         
+        thorium_message_print(message);
+
         /*
          * Send a ping message to self.
          */
