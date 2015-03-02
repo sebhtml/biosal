@@ -85,11 +85,13 @@
  * - number
  * - source_actor
  * - destination_actor
+ *
  * - routing_source
  * - routing_destination
+ *
  * - tracepoint stuff (disabled by default)
  */
-#define THORIUM_MESSAGE_METADATA_SIZE (4 * sizeof(int) + ROUTING_SIZE + TRACEPOINT_SIZE)
+#define THORIUM_MESSAGE_METADATA_SIZE (5 * sizeof(int) + ROUTING_SIZE + TRACEPOINT_SIZE)
 
 /*
  * This is a message.

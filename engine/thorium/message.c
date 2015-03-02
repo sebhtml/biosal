@@ -29,6 +29,9 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
     self->buffer = buffer;
     self->count = count;
 
+    self->message_identifier = -1;
+    self->parent_message_identifier = -1;
+
     self->source_actor = THORIUM_ACTOR_NOBODY;
     self->destination_actor = THORIUM_ACTOR_NOBODY;
 
@@ -96,12 +99,13 @@ void thorium_message_set_destination(struct thorium_message *self, int destinati
 
 void thorium_message_print(struct thorium_message *self)
 {
-    printf("Message Number %d"
+    printf("Message Number %d Parent %d"
                     " Action 0x%x Count %d Buffer %p SourceActor %d DestinationActor %d"
                     " SourceNode %d DestinationNode %d"
                     " RoutingSourceNode %d RoutingDestinationNode %d\n"
                     " Type %d Worker %d",
                     self->message_identifier,
+                    self->parent_message_identifier,
                     self->action,
                     self->count,
                     self->buffer,
@@ -263,6 +267,8 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
     core_packer_process(&packer, &self->action, sizeof(self->action));
     core_packer_process(&packer, &self->message_identifier, sizeof(self->message_identifier));
+    core_packer_process(&packer, &self->parent_message_identifier,
+                    sizeof(self->parent_message_identifier));
 
 #ifdef THORIUM_MESSAGE_USE_ROUTING
     core_packer_process(&packer, &self->routing_source, sizeof(self->routing_source));
