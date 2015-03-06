@@ -428,9 +428,14 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self)
 }
 #endif
 
-void thorium_message_set_number(struct thorium_message *self, int number)
+void thorium_message_set_identifier(struct thorium_message *self, int identifier)
 {
-    self->message_identifier = number;
+    self->message_identifier = identifier;
+}
+
+void thorium_message_set_parent_identifier(struct thorium_message *self, int identifier)
+{
+    self->parent_message_identifier = identifier;
 }
 
 void thorium_message_add_metadata_to_count(struct thorium_message *self)
@@ -485,4 +490,14 @@ void thorium_message_set_routing_destination_node(struct thorium_message *self, 
 void thorium_message_set_routing_source_node(struct thorium_message *self, int source)
 {
     self->routing_source = source;
+}
+
+int thorium_message_get_identifier(struct thorium_message *self)
+{
+    return self->message_identifier;
+}
+
+int thorium_message_get_parent_identifier(struct thorium_message *self)
+{
+    return self->parent_message_identifier;
 }
