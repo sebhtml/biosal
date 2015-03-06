@@ -119,6 +119,9 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     thorium_actor_init_fn_t init;
     int capacity;
 
+    /*
+     * message_number -1 is reserved for the boot message.
+     */
     self->message_number = 0;
 
     /*
@@ -543,8 +546,21 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
      * Assign a number to the message.
      * Message numbers are unique within any given actor.
      */
-    thorium_message_set_number(message, self->message_number);
-    ++self->message_number;
+    thorium_message_set_identifier(message, thorium_actor_get_message_number(self));
+
+    /*
+     * Assign the parent message identifier too. This is used
+     * to select the callback to be used when the other actor
+     * receives the response.
+     *
+     * This is similar to the CSEQ header in some way.
+     *
+     * https://tools.ietf.org/html/rfc3261
+     */
+
+    struct thorium_message *current_message = self->current_message;
+    int parent_identifier = thorium_message_get_identifier(current_message);
+    thorium_message_set_parent_identifier(message, parent_identifier);
 
     source = thorium_actor_name(self);
 
@@ -1190,6 +1206,9 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t start;
     uint64_t end;
     uint64_t consumed_virtual_runtime;
+
+    CORE_DEBUGGER_ASSERT(thorium_message_get_identifier(message) >= 0);
+    CORE_DEBUGGER_ASSERT(thorium_message_get_parent_identifier(message) >= 0);
 
     tracepoint(thorium_message, actor_receive, message);
 
@@ -2680,4 +2699,14 @@ void thorium_actor_print_communication_report(struct thorium_actor *self)
                     thorium_actor_get_counter_value(self, CORE_COUNTER_SENT_MESSAGES_REMOTE));
 }
 
+int thorium_actor_get_message_number(struct thorium_actor *self)
+{
+    int value = self->message_number;
+    ++self->message_number;
 
+    /*
+    printf("GENERATOR message_id() -> %d\n", value);
+    */
+
+    return value;
+}

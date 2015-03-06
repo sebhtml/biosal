@@ -527,5 +527,6 @@ void thorium_actor_clear_flag(struct thorium_actor *self, int flag);
 void thorium_actor_print_communication_report(struct thorium_actor *self);
 
 void thorium_actor_increment_counter(struct thorium_actor *self, int event);
+int thorium_actor_get_message_number(struct thorium_actor *self);
 
 #endif

@@ -1169,6 +1169,14 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
 
         thorium_message_init(&message, ACTION_START, bytes, buffer);
 
+        int first_message_identifier = thorium_actor_get_message_number(actor);
+
+        /*
+         * Set both the message identifier and the parent message identifier.
+         */
+        thorium_message_set_identifier(&message, first_message_identifier);
+        thorium_message_set_parent_identifier(&message, first_message_identifier);
+
         /*
          * Add metadata because workers strip metadata before
          * giving messages to actors.
