@@ -12,7 +12,7 @@ then
     module load mpich/3.1.1-1
 
     # overwrite the target when running on a big node
-    #target="all-tests"
+    target="all-tests"
 fi
 
 if test "$compiler" = "gcc"
