@@ -11,7 +11,8 @@ if test $JOB_NAME = "big-system-tests"
 then
     module load mpich/3.1.1-1
 
-    target="all-tests"
+    # overwrite the target when running on a big node
+    #target="all-tests"
 fi
 
 if test "$compiler" = "gcc"
