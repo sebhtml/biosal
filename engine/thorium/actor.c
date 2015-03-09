@@ -558,8 +558,19 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
      * https://tools.ietf.org/html/rfc3261
      */
 
+    CORE_DEBUGGER_ASSERT(self->current_message != NULL);
+
     struct thorium_message *current_message = self->current_message;
-    int parent_identifier = thorium_message_get_identifier(current_message);
+    int parent_identifier = THORIUM_ACTOR_NO_VALUE;
+
+    /*
+     * current_message can be NULL if send() is called inside init().
+     * This should be prohibited, but some constructors do it anyway
+     * to send messages to self for configurings aspects of actors.
+     */
+    if (current_message != NULL)
+        parent_identifier = thorium_message_get_identifier(current_message);
+
     thorium_message_set_parent_identifier(message, parent_identifier);
 
     source = thorium_actor_name(self);
