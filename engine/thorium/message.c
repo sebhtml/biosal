@@ -29,8 +29,8 @@ void thorium_message_init(struct thorium_message *self, int action, int count,
     self->buffer = buffer;
     self->count = count;
 
-    self->message_identifier = -1;
-    self->parent_message_identifier = -1;
+    self->_message_identifier = -1;
+    self->_parent_message_identifier = -1;
 
     self->source_actor = THORIUM_ACTOR_NOBODY;
     self->destination_actor = THORIUM_ACTOR_NOBODY;
@@ -99,13 +99,13 @@ void thorium_message_set_destination(struct thorium_message *self, int destinati
 
 void thorium_message_print(struct thorium_message *self)
 {
-    printf("Message Number %d Parent %d"
+    printf("Message Number %" PRIu64 " Parent %" PRIu64 ""
                     " Action 0x%x Count %d Buffer %p SourceActor %d DestinationActor %d"
                     " SourceNode %d DestinationNode %d"
                     " RoutingSourceNode %d RoutingDestinationNode %d\n"
                     " Type %d Worker %d",
-                    self->message_identifier,
-                    self->parent_message_identifier,
+                    self->_message_identifier,
+                    self->_parent_message_identifier,
                     self->action,
                     self->count,
                     self->buffer,
@@ -266,9 +266,9 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->source_actor, sizeof(self->source_actor));
     core_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
     core_packer_process(&packer, &self->action, sizeof(self->action));
-    core_packer_process(&packer, &self->message_identifier, sizeof(self->message_identifier));
-    core_packer_process(&packer, &self->parent_message_identifier,
-                    sizeof(self->parent_message_identifier));
+    core_packer_process(&packer, &self->_message_identifier, sizeof(self->_message_identifier));
+    core_packer_process(&packer, &self->_parent_message_identifier,
+                    sizeof(self->_parent_message_identifier));
 
 #ifdef THORIUM_MESSAGE_USE_ROUTING
     core_packer_process(&packer, &self->routing_source, sizeof(self->routing_source));
@@ -428,14 +428,14 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self)
 }
 #endif
 
-void thorium_message_set_identifier(struct thorium_message *self, int identifier)
+void thorium_message_set_identifier(struct thorium_message *self, uint64_t identifier)
 {
-    self->message_identifier = identifier;
+    self->_message_identifier = identifier;
 }
 
-void thorium_message_set_parent_identifier(struct thorium_message *self, int identifier)
+void thorium_message_set_parent_identifier(struct thorium_message *self, uint64_t identifier)
 {
-    self->parent_message_identifier = identifier;
+    self->_parent_message_identifier = identifier;
 }
 
 void thorium_message_add_metadata_to_count(struct thorium_message *self)
@@ -494,10 +494,10 @@ void thorium_message_set_routing_source_node(struct thorium_message *self, int s
 
 int thorium_message_get_identifier(struct thorium_message *self)
 {
-    return self->message_identifier;
+    return self->_message_identifier;
 }
 
 int thorium_message_get_parent_identifier(struct thorium_message *self)
 {
-    return self->parent_message_identifier;
+    return self->_parent_message_identifier;
 }
