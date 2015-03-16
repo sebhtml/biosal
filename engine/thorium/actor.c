@@ -526,6 +526,7 @@ int thorium_actor_send_system(struct thorium_actor *self, int name, struct thori
 void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_message *message)
 {
     int source;
+    int id;
 
     CORE_DEBUGGER_ASSERT(name != THORIUM_ACTOR_NOBODY);
 
@@ -542,11 +543,13 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     ++self->counter_sent_message_count;
     thorium_actor_increment_event_counter(self, THORIUM_EVENT_ACTOR_SEND);
 
+    id = thorium_actor_get_message_number(self);
+
     /*
      * Assign a number to the message.
      * Message numbers are unique within any given actor.
      */
-    thorium_message_set_identifier(message, thorium_actor_get_message_number(self));
+    thorium_message_set_identifier(message, id);
 
     /*
      * Assign the parent message identifier too. This is used
@@ -558,7 +561,14 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
      * https://tools.ietf.org/html/rfc3261
      */
 
-    CORE_DEBUGGER_ASSERT(self->current_message != NULL);
+    /*
+     * The current message is NULL only when this is the first message sent.
+     *
+     * Also, when sending messages inside the constructor (_init()),
+     * current_message is not set.
+     */
+    CORE_DEBUGGER_ASSERT(self->current_message != NULL
+                    || id == 0);
 
     struct thorium_message *current_message = self->current_message;
     int parent_identifier = THORIUM_ACTOR_NO_VALUE;
