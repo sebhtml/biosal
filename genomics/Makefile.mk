@@ -35,3 +35,6 @@ GENOMICS_OBJECTS += genomics/formats/fastq_input.o
 GENOMICS_OBJECTS += genomics/formats/fasta_input.o
 
 LIBRARY_OBJECTS += $(GENOMICS_OBJECTS)
+
+# cleaner
+GENOMICS_OBJECTS += genomics/graph_cleaner/tip_detector.o
