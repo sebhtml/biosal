@@ -27,6 +27,7 @@ THORIUM_OBJECTS += engine/thorium/modules/time_in_seconds.o
 THORIUM_OBJECTS += engine/thorium/modules/log.o
 THORIUM_OBJECTS += engine/thorium/modules/adaptive_actor.o
 THORIUM_OBJECTS += engine/thorium/modules/message_helper.o
+THORIUM_OBJECTS += engine/thorium/modules/then.o
 
 include engine/thorium/scheduler/Makefile.mk
 

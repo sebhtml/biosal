@@ -62,6 +62,8 @@ void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium
 void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
 void spate_set_producers_reply_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
 
+void spate_set_producer_reply(struct thorium_actor *self, struct thorium_message *message);
+
 struct thorium_script spate_script = {
     .identifier = SCRIPT_SPATE,
     .init = spate_init,
@@ -483,6 +485,29 @@ void spate_distribute_reply(struct thorium_actor *self, struct thorium_message *
 }
 
 void spate_set_producers_reply(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct spate *concrete_self;
+    struct thorium_message new_message;
+    concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
+
+    int manager = -1;
+
+    thorium_message_init(&new_message, ACTION_SET_PRODUCER, sizeof(manager), &manager);
+
+    /*
+     * Call spate_set_producer_reply when receiving the response.
+     */
+    thorium_actor_send_reply_then(self, &new_message, spate_set_producer_reply);
+
+    /*
+     * Go around the correct code path since
+     * thorium_actor_send_reply_with_future is not implemented right now.
+     */
+    spate_set_producer_reply(self, message);
+}
+
+
+void spate_set_producer_reply(struct thorium_actor *self, struct thorium_message *message)
 {
     struct spate *concrete_self;
 

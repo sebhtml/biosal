@@ -492,12 +492,12 @@ void thorium_message_set_routing_source_node(struct thorium_message *self, int s
     self->routing_source = source;
 }
 
-int thorium_message_get_identifier(struct thorium_message *self)
+uint64_t thorium_message_get_identifier(struct thorium_message *self)
 {
     return self->_message_identifier;
 }
 
-int thorium_message_get_parent_identifier(struct thorium_message *self)
+uint64_t thorium_message_get_parent_identifier(struct thorium_message *self)
 {
     return self->_parent_message_identifier;
 }

@@ -1228,8 +1228,10 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t end;
     uint64_t consumed_virtual_runtime;
 
+    /*
     CORE_DEBUGGER_ASSERT(thorium_message_get_identifier(message) >= 0);
     CORE_DEBUGGER_ASSERT(thorium_message_get_parent_identifier(message) >= 0);
+    */
 
     tracepoint(thorium_message, actor_receive, message);
 

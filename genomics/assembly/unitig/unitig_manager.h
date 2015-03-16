@@ -25,6 +25,7 @@ struct biosal_unitig_manager {
     struct core_vector graph_stores;
     struct core_vector visitors;
     struct core_vector walkers;
+    int graph_manager;
 
     int visitor_count_per_worker;
     int walker_count_per_worker;

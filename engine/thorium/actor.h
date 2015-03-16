@@ -19,6 +19,7 @@
 #include "modules/time_in_seconds.h"
 #include "modules/log.h"
 #include "modules/adaptive_actor.h"
+#include "modules/then.h"
 
 /*
  * For priority levels.
