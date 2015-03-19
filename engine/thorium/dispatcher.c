@@ -9,14 +9,24 @@
 #include <core/structures/vector.h>
 #include <core/structures/map_iterator.h>
 
+#include <core/system/debugger.h>
+
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
 #define THORIUM_DISPATCHER_DEBUG_10335
 */
 
+struct parent_key {
+    int parent_actor;
+    int parent_message;
+};
+
 thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *self, int tag, int source);
+thorium_actor_receive_fn_t thorium_dispatcher_get_with_parent(struct thorium_dispatcher *self,
+                struct thorium_message *message);
 
 void thorium_dispatcher_init(struct thorium_dispatcher *self,
                 struct core_memory_pool *pool)
@@ -24,6 +34,9 @@ void thorium_dispatcher_init(struct thorium_dispatcher *self,
     self->pool = pool;
 
     core_map_init(&self->routes, sizeof(int), sizeof(struct core_map));
+    core_map_set_memory_pool(&self->routes, self->pool);
+    core_map_init(&self->parent_routes, sizeof(struct parent_key),
+                    sizeof(thorium_actor_receive_fn_t));
     core_map_set_memory_pool(&self->routes, self->pool);
 }
 
@@ -62,6 +75,7 @@ void thorium_dispatcher_destroy(struct thorium_dispatcher *self)
     core_map_iterator_destroy(&iterator);
 
     core_map_destroy(&self->routes);
+    core_map_destroy(&self->parent_routes);
 }
 
 void thorium_dispatcher_add_action(struct thorium_dispatcher *self, int tag,
@@ -174,6 +188,13 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
         handler = thorium_dispatcher_get(self, tag, THORIUM_ACTOR_ANYBODY);
     }
 
+    /*
+     * Try to find a handler using the parent message routing table.
+     */
+    if (handler == NULL) {
+        handler = thorium_dispatcher_get_with_parent(self, message);
+    }
+
     if (handler == NULL) {
 
         /*
@@ -268,3 +289,58 @@ thorium_actor_receive_fn_t thorium_dispatcher_get(struct thorium_dispatcher *sel
 void thorium_dispatcher_print(struct thorium_dispatcher *self)
 {
 }
+
+void thorium_dispatcher_add_action_with_parent(struct thorium_dispatcher *self, int parent_actor, int parent_message,
+                thorium_actor_receive_fn_t handler)
+{
+    struct parent_key key = {
+        .parent_actor = parent_actor,
+        .parent_message = parent_message
+    };
+
+    /* The key is already there. */
+    if (core_map_get(&self->parent_routes, &key) != NULL)
+        return;
+
+    printf("XXX add handler for parent message %d:%d\n",
+                    parent_actor, parent_message);
+
+    core_map_add_value(&self->parent_routes, &key, &handler);
+}
+
+thorium_actor_receive_fn_t thorium_dispatcher_get_with_parent(struct thorium_dispatcher *self,
+                struct thorium_message *message)
+{
+    thorium_actor_receive_fn_t handler = NULL;
+
+    struct parent_key key = {
+        .parent_actor = thorium_message_get_parent_actor(message),
+        .parent_message = thorium_message_get_parent_identifier(message)
+    };
+
+    void *pointer = core_map_get(&self->parent_routes, &key);
+
+    if (pointer != NULL) {
+
+        printf("XXX Got hit for handler !\n");
+        memcpy(&handler, pointer, sizeof(handler));
+    }
+
+    return handler;
+}
+
+void thorium_dispatcher_delete_action_with_parent(struct thorium_dispatcher *self, int parent_actor, int parent_message)
+{
+    struct parent_key key = {
+        .parent_actor = parent_actor,
+        .parent_message = parent_message
+    };
+
+    /* The key is already there. */
+    if (core_map_get(&self->parent_routes, &key) == NULL)
+        return;
+
+    core_map_delete(&self->parent_routes, &key);
+}
+
+

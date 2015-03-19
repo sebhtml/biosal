@@ -19,15 +19,26 @@ void thorium_actor_send_then(struct thorium_actor *self, int destination,
 {
     thorium_actor_send(self, destination, message);
 
+    int parent_actor = thorium_message_source(message);
+    int parent_message = thorium_message_get_identifier(message);
+
     /*
      * TODO: register the information so that the callback is invoked
      * when the response arrives.
+     *
+     * the key is parent_actor + parent_message and the value is handler.
      */
+
+    thorium_actor_add_action_with_parent(self, parent_actor, parent_message,
+                    handler);
+
+    /*
     printf("NOT_IMPLEMENTED src %d dst %d msgid %d:%d" "\n",
                     thorium_actor_name(self),
                     destination,
-                    thorium_message_source(message),
-                    thorium_message_get_identifier(message));
+                    parent_actor,
+                    parent_message);
+                    */
 }
 
 

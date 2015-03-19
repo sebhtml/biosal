@@ -45,4 +45,6 @@ void thorium_actor_add_action_with_source(struct thorium_actor *self, int tag, t
 void thorium_actor_add_action_with_condition(struct thorium_actor *self, int tag, thorium_actor_receive_fn_t handler, int *actual,
                 int expected);
 
+void thorium_actor_add_action_with_parent(struct thorium_actor *self, int parent_actor, int parent_message,
+                thorium_actor_receive_fn_t handler);
 
