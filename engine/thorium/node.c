@@ -1176,6 +1176,7 @@ void thorium_node_start_initial_actor(struct thorium_node *node)
          */
         thorium_message_set_identifier(&message, first_message_identifier);
         thorium_message_set_parent_identifier(&message, first_message_identifier);
+        thorium_message_set_parent_actor(&message, name);
 
         /*
          * Add metadata because workers strip metadata before

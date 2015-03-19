@@ -99,12 +99,14 @@ void thorium_message_set_destination(struct thorium_message *self, int destinati
 
 void thorium_message_print(struct thorium_message *self)
 {
-    printf("Message Number %" PRIu64 " Parent %" PRIu64 ""
+    printf("Message Number %d:%d" " Parent %d:%d" ""
                     " Action 0x%x Count %d Buffer %p SourceActor %d DestinationActor %d"
                     " SourceNode %d DestinationNode %d"
                     " RoutingSourceNode %d RoutingDestinationNode %d\n"
                     " Type %d Worker %d",
+                    self->source_actor,
                     self->_message_identifier,
+                    self->_parent_message_actor,
                     self->_parent_message_identifier,
                     self->action,
                     self->count,
@@ -267,6 +269,7 @@ int thorium_message_pack_unpack(struct thorium_message *self, int operation, voi
     core_packer_process(&packer, &self->destination_actor, sizeof(self->destination_actor));
     core_packer_process(&packer, &self->action, sizeof(self->action));
     core_packer_process(&packer, &self->_message_identifier, sizeof(self->_message_identifier));
+    core_packer_process(&packer, &self->_parent_message_actor, sizeof(self->_parent_message_actor));
     core_packer_process(&packer, &self->_parent_message_identifier,
                     sizeof(self->_parent_message_identifier));
 
@@ -428,12 +431,12 @@ void thorium_message_initialize_tracepoints(struct thorium_message *self)
 }
 #endif
 
-void thorium_message_set_identifier(struct thorium_message *self, uint64_t identifier)
+void thorium_message_set_identifier(struct thorium_message *self, int identifier)
 {
     self->_message_identifier = identifier;
 }
 
-void thorium_message_set_parent_identifier(struct thorium_message *self, uint64_t identifier)
+void thorium_message_set_parent_identifier(struct thorium_message *self, int identifier)
 {
     self->_parent_message_identifier = identifier;
 }
@@ -492,12 +495,23 @@ void thorium_message_set_routing_source_node(struct thorium_message *self, int s
     self->routing_source = source;
 }
 
-uint64_t thorium_message_get_identifier(struct thorium_message *self)
+int thorium_message_get_identifier(struct thorium_message *self)
 {
     return self->_message_identifier;
 }
 
-uint64_t thorium_message_get_parent_identifier(struct thorium_message *self)
+int thorium_message_get_parent_identifier(struct thorium_message *self)
 {
     return self->_parent_message_identifier;
+}
+
+
+void thorium_message_set_parent_actor(struct thorium_message *self, int identifier)
+{
+    self->_parent_message_actor = identifier;
+}
+
+int thorium_message_get_parent_actor(struct thorium_message *self)
+{
+    return self->_parent_message_actor;
 }

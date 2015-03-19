@@ -572,16 +572,20 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
 
     struct thorium_message *current_message = self->current_message;
     int parent_identifier = THORIUM_ACTOR_NO_VALUE;
+    int parent_actor = THORIUM_ACTOR_NO_VALUE;
 
     /*
      * current_message can be NULL if send() is called inside init().
      * This should be prohibited, but some constructors do it anyway
      * to send messages to self for configurings aspects of actors.
      */
-    if (current_message != NULL)
+    if (current_message != NULL) {
         parent_identifier = thorium_message_get_identifier(current_message);
+        parent_actor = thorium_message_source(current_message);
+    }
 
     thorium_message_set_parent_identifier(message, parent_identifier);
+    thorium_message_set_parent_actor(message, parent_actor);
 
     source = thorium_actor_name(self);
 

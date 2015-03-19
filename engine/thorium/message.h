@@ -101,9 +101,13 @@ struct thorium_message {
 
     /*
      * Message identifiers.
+     * _message_identifier is unique for a given source_actor.
+     *
+     * the pair (_parent_message_actor, _parent_message_identifier) is unique too.
      */
-    uint64_t _message_identifier;
-    uint64_t _parent_message_identifier;
+    int _message_identifier;
+    int _parent_message_actor;
+    int _parent_message_identifier;
 
     void *buffer;
     int count;
@@ -174,10 +178,12 @@ uint64_t thorium_message_get_tracepoint_time(struct thorium_message *self, int t
 void thorium_message_print_tracepoints(struct thorium_message *self);
 #endif
 
-void thorium_message_set_identifier(struct thorium_message *self, uint64_t identifier);
-void thorium_message_set_parent_identifier(struct thorium_message *self, uint64_t identifier);
-uint64_t thorium_message_get_identifier(struct thorium_message *self);
-uint64_t thorium_message_get_parent_identifier(struct thorium_message *self);
+void thorium_message_set_identifier(struct thorium_message *self, int identifier);
+void thorium_message_set_parent_identifier(struct thorium_message *self, int identifier);
+void thorium_message_set_parent_actor(struct thorium_message *self, int identifier);
+int thorium_message_get_identifier(struct thorium_message *self);
+int thorium_message_get_parent_identifier(struct thorium_message *self);
+int thorium_message_get_parent_actor(struct thorium_message *self);
 
 /*
  * Metadata functions.

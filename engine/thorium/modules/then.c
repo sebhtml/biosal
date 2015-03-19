@@ -23,9 +23,10 @@ void thorium_actor_send_then(struct thorium_actor *self, int destination,
      * TODO: register the information so that the callback is invoked
      * when the response arrives.
      */
-    printf("NOT_IMPLEMENTED src %d dst %d msgid %" PRIu64 "\n",
+    printf("NOT_IMPLEMENTED src %d dst %d msgid %d:%d" "\n",
                     thorium_actor_name(self),
                     destination,
+                    thorium_message_source(message),
                     thorium_message_get_identifier(message));
 }
 
