@@ -215,7 +215,15 @@ void biosal_assembly_graph_builder_destroy(struct thorium_actor *self)
 
 void biosal_assembly_graph_builder_receive(struct thorium_actor *self, struct thorium_message *message)
 {
+    int action = thorium_message_action(message);
     thorium_actor_take_action(self, message);
+
+    if (action == ACTION_SET_PRODUCER) {
+
+        printf("XXX graph builder received ACTION_SET_PRODUCER, responding with ACTION_SET_PRODUCER_REPLY.\n");
+
+        thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCER_REPLY);
+    }
 }
 
 void biosal_assembly_graph_builder_ask_to_stop(struct thorium_actor *self, struct thorium_message *message)

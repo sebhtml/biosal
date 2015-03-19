@@ -190,6 +190,9 @@ void spate_destroy(struct thorium_actor *self)
 
 void spate_receive(struct thorium_actor *self, struct thorium_message *message)
 {
+    printf("Spate actor %d received a message !!!\n", thorium_actor_name(self));
+
+    thorium_message_print(message);
     thorium_actor_take_action(self, message);
 }
 
@@ -490,7 +493,7 @@ void spate_set_producers_reply(struct thorium_actor *self, struct thorium_messag
     struct thorium_message new_message;
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
-    int manager = -1;
+    int manager = -999;
 
     thorium_message_init(&new_message, ACTION_SET_PRODUCER, sizeof(manager), &manager);
 
