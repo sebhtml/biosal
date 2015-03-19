@@ -220,6 +220,9 @@ void biosal_assembly_graph_builder_receive(struct thorium_actor *self, struct th
 
     if (action == ACTION_SET_PRODUCER) {
 
+        /*
+         * This chunk is just a test for the _send_then() code.
+         */
         printf("XXX graph builder received ACTION_SET_PRODUCER, responding with ACTION_SET_PRODUCER_REPLY.\n");
 
         thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCER_REPLY);

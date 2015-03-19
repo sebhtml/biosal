@@ -506,7 +506,7 @@ void spate_set_producers_reply(struct thorium_actor *self, struct thorium_messag
      * Go around the correct code path since
      * thorium_actor_send_reply_with_future is not implemented right now.
      */
-    spate_set_producer_reply(self, message);
+    /*spate_set_producer_reply(self, message);*/
 }
 
 
