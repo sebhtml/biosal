@@ -15,6 +15,7 @@ struct thorium_script biosal_tip_detector_script = {
     .destroy = destroy,
     .receive = receive,
     .size = sizeof(struct biosal_tip_detector),
+    .name = "biosal_tip_detector"
 };
 
 void init(struct thorium_actor *self)

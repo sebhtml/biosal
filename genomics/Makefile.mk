@@ -38,3 +38,4 @@ LIBRARY_OBJECTS += $(GENOMICS_OBJECTS)
 
 # cleaner
 GENOMICS_OBJECTS += genomics/graph_cleaner/tip_detector.o
+GENOMICS_OBJECTS += genomics/graph_cleaner/tip_manager.o
