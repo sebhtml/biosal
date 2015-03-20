@@ -43,4 +43,8 @@
 
 #include "genomics/storage/sequence_store.h"
 
+typedef struct thorium_actor actor_t;
+typedef struct thorium_message message_t;
+typedef int actor_name_t;
+
 #endif
