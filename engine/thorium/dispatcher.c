@@ -150,6 +150,8 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
     int tag;
     int source;
 
+    handler = NULL;
+
     tag = thorium_message_action(message);
     source = thorium_message_source(message);
 
@@ -169,13 +171,24 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
 #endif
 
     /*
+     * Try to find a handler using the parent message routing table.
+     *
+     * This look-up is performed first.
+     */
+    if (handler == NULL) {
+        handler = thorium_dispatcher_get_with_parent(self, message);
+    }
+
+
+    /*
      * First try to get a route using
      * the tag and the source.
      *
      * If that does not work, try with the tag and
      * with the source wildcard THORIUM_ACTOR_ANYBODY
      */
-    handler = thorium_dispatcher_get(self, tag, source);
+    if (handler == NULL)
+        handler = thorium_dispatcher_get(self, tag, source);
 
     /*
      * If there is no route for this source,
@@ -186,13 +199,6 @@ int thorium_dispatcher_dispatch(struct thorium_dispatcher *self, struct thorium_
     if (handler == NULL) {
 
         handler = thorium_dispatcher_get(self, tag, THORIUM_ACTOR_ANYBODY);
-    }
-
-    /*
-     * Try to find a handler using the parent message routing table.
-     */
-    if (handler == NULL) {
-        handler = thorium_dispatcher_get_with_parent(self, message);
     }
 
     if (handler == NULL) {
@@ -312,11 +318,17 @@ thorium_actor_receive_fn_t thorium_dispatcher_get_with_parent(struct thorium_dis
                 struct thorium_message *message)
 {
     thorium_actor_receive_fn_t handler = NULL;
+    int parent_actor = thorium_message_get_parent_actor(message);
+    int parent_message = thorium_message_get_parent_identifier(message);
 
     struct parent_key key = {
-        .parent_actor = thorium_message_get_parent_actor(message),
-        .parent_message = thorium_message_get_parent_identifier(message)
+        .parent_actor = parent_actor,
+        .parent_message = parent_message
     };
+
+    /*
+    printf("XXX looking for %d:%d in table.\n", parent_actor, parent_message);
+    */
 
     void *pointer = core_map_get(&self->parent_routes, &key);
 
