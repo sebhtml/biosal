@@ -43,4 +43,6 @@ char *thorium_script_description(struct thorium_script *self);
 char *thorium_script_author(struct thorium_script *self);
 char *thorium_script_version(struct thorium_script *self);
 
+void thorium_script_check_sanity(struct thorium_script *self);
+
 #endif

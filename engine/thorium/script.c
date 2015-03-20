@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include <stdio.h>
+
 void thorium_script_init(struct thorium_script *self, int identifier,
                 thorium_actor_init_fn_t init,
                 thorium_actor_destroy_fn_t destroy,
@@ -82,4 +84,11 @@ char *thorium_script_author(struct thorium_script *self)
 char *thorium_script_version(struct thorium_script *self)
 {
     return self->version;
+}
+
+void thorium_script_check_sanity(struct thorium_script *self)
+{
+    if (self->name == NULL) {
+        printf("Error: script has invalid name...\n");
+    }
 }
