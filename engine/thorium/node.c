@@ -1933,6 +1933,8 @@ void thorium_node_add_script(struct thorium_node *node, int name,
 {
     int can_add;
 
+    thorium_script_check_sanity(script);
+
     core_spinlock_lock(&node->script_lock);
 
     can_add = 1;
