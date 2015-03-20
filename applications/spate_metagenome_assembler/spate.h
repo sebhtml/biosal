@@ -25,6 +25,7 @@ struct spate {
     struct core_vector initial_actors;
     struct core_vector graph_stores;
 
+    int tip_manager;
     int unitig_manager;
 
     int is_leader;

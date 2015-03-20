@@ -12,9 +12,14 @@
 #include <genomics/assembly/unitig/unitig_walker.h>
 #include <genomics/assembly/unitig/unitig_manager.h>
 
+#include <genomics/graph_cleaner/tip_manager.h>
+#include <genomics/graph_cleaner/tip_detector.h>
+
 #include <genomics/input/input_controller.h>
 
 #include <genomics/helpers/command.h>
+
+#include <core/helpers/integer.h>
 
 #include <core/system/command.h>
 
@@ -60,9 +65,10 @@ int spate_must_print_help(struct thorium_actor *self);
 
 void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
 void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
-void spate_set_producers_reply_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
+void spate_set_producers_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message);
 
 void spate_set_producer_reply(struct thorium_actor *self, struct thorium_message *message);
+void spate_callback_1(struct thorium_actor *self, struct thorium_message *message);
 
 struct thorium_script spate_script = {
     .identifier = SCRIPT_SPATE,
@@ -160,6 +166,10 @@ void spate_init(struct thorium_actor *self)
                     &biosal_unitig_visitor_script);
     thorium_actor_add_script(self, SCRIPT_UNITIG_MANAGER,
                     &biosal_unitig_manager_script);
+    thorium_actor_add_script(self, SCRIPT_TIP_MANAGER,
+                    &biosal_tip_manager_script);
+    thorium_actor_add_script(self, SCRIPT_TIP_DETECTOR,
+                    &biosal_tip_detector_script);
 
     /*
      * This is the I/O controller block size.
@@ -558,6 +568,7 @@ void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium
                     spate_start_reply_unitig_manager,
                     concrete_self->unitig_manager);
 
+    printf("sending ACTION_START to unitig_manager.\n");
     thorium_actor_send_vector(self, concrete_self->unitig_manager,
                     ACTION_START,
                     &concrete_self->initial_actors);
@@ -565,19 +576,43 @@ void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium
 
 void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
 {
-    struct spate *concrete_self;
+    printf("FOO BAR\n");
 
+    struct spate *concrete_self;
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
     thorium_actor_add_action_with_source(self, ACTION_SET_PRODUCERS_REPLY,
-                    spate_set_producers_reply_reply_unitig_manager,
+                    spate_set_producers_reply_unitig_manager,
                     concrete_self->unitig_manager);
 
-    thorium_actor_send_reply_vector(self, ACTION_SET_PRODUCERS,
+    int spawner = thorium_actor_get_random_spawner(self, &concrete_self->initial_actors);
+
+    printf("spate will spawn with spawner %d\n",
+                    spawner);
+    thorium_actor_send_then_int(self, spawner, ACTION_SPAWN, SCRIPT_TIP_MANAGER, 
+                    spate_callback_1);
+
+    printf("AFTER SENDING SPAWN REQUEST CAPLOCK\n");
+}
+
+void spate_callback_1(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct spate *concrete_self;
+    concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
+    void *buffer = thorium_message_buffer(message);
+
+    printf("got tip manager name %d\n", concrete_self->tip_manager);
+
+    core_int_unpack(&concrete_self->tip_manager, buffer);
+
+    thorium_actor_send_empty(self, concrete_self->tip_manager, ACTION_ASK_TO_STOP);
+
+    thorium_actor_send_vector(self, concrete_self->unitig_manager,
+                    ACTION_SET_PRODUCERS,
                     &concrete_self->graph_stores);
 }
 
-void spate_set_producers_reply_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
+void spate_set_producers_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
 {
     thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP);
 
