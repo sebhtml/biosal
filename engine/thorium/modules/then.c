@@ -41,8 +41,6 @@ void thorium_actor_send_then(struct thorium_actor *self, int destination,
                     */
 }
 
-
-
 void thorium_actor_send_then_int(struct thorium_actor *actor, int destination, int action, int value,
                 thorium_actor_receive_fn_t handler)
 {
