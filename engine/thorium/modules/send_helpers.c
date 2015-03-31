@@ -383,19 +383,4 @@ void thorium_actor_send_to_self_2_int(struct thorium_actor *actor, int action, i
                     value2);
 }
 
-void thorium_actor_send_then_int(struct thorium_actor *actor, int destination, int action, int value,
-                thorium_actor_receive_fn_t handler)
-{
-    struct thorium_message message;
-    int count;
-    int offset;
 
-    count = sizeof(value);
-    void *buffer = thorium_actor_allocate(actor, count);
-
-    core_memory_copy(buffer, &value, sizeof(value));
-
-    thorium_message_init(&message, action, count, buffer);
-    thorium_actor_send_then(actor, destination, &message, handler);
-    thorium_message_destroy(&message);
-}

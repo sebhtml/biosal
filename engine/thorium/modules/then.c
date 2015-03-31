@@ -43,4 +43,33 @@ void thorium_actor_send_then(struct thorium_actor *self, int destination,
 
 
 
+void thorium_actor_send_then_int(struct thorium_actor *actor, int destination, int action, int value,
+                thorium_actor_receive_fn_t handler)
+{
+    struct thorium_message message;
+    int count;
+    int offset;
 
+    count = sizeof(value);
+    void *buffer = thorium_actor_allocate(actor, count);
+
+    core_memory_copy(buffer, &value, sizeof(value));
+
+    thorium_message_init(&message, action, count, buffer);
+    thorium_actor_send_then(actor, destination, &message, handler);
+    thorium_message_destroy(&message);
+}
+
+
+void thorium_actor_send_then_empty(struct thorium_actor *actor, int destination, int action,
+                thorium_actor_receive_fn_t handler)
+{
+    struct thorium_message message;
+    int offset;
+    int count = 0;
+    void *buffer = NULL;
+
+    thorium_message_init(&message, action, count, buffer);
+    thorium_actor_send_then(actor, destination, &message, handler);
+    thorium_message_destroy(&message);
+}

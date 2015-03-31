@@ -69,7 +69,4 @@ void thorium_actor_send_reply(struct thorium_actor *actor, struct thorium_messag
 void thorium_actor_send_to_self(struct thorium_actor *actor, struct thorium_message *message);
 void thorium_actor_send_to_supervisor(struct thorium_actor *actor, struct thorium_message *message);
 
-void thorium_actor_send_then_int(struct thorium_actor *actor, int destination, int action, int value,
-                thorium_actor_receive_fn_t handler);
-
 #endif
