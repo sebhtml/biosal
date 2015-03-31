@@ -285,14 +285,8 @@ void biosal_assembly_graph_builder_start(struct thorium_actor *self, struct thor
      */
     concrete_self->manager_for_graph_stores = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
-    thorium_actor_add_action_with_source_and_condition(self,
-                    ACTION_SPAWN_REPLY,
-                    biosal_assembly_graph_builder_spawn_reply_graph_store_manager,
-                    spawner,
-                    &(concrete_self->manager_for_graph_stores),
-                    THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
-
-    thorium_actor_send_int(self, spawner, ACTION_SPAWN, SCRIPT_MANAGER);
+    thorium_actor_send_then_int(self, spawner, ACTION_SPAWN, SCRIPT_MANAGER,
+                    biosal_assembly_graph_builder_spawn_reply_graph_store_manager);
 }
 
 void biosal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thorium_actor *self, struct thorium_message *message)
