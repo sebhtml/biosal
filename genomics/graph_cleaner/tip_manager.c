@@ -54,6 +54,8 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
          */
     } else if (action == ACTION_ASK_TO_STOP) {
 
+        thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
+
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
     }
 }
