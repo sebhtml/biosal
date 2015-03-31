@@ -44,6 +44,9 @@ struct thorium_message;
 
 #endif
 
+#define LOG(...) \
+        thorium_actor_log(self, __VA_ARGS__)
+
 void thorium_actor_log_implementation(struct thorium_actor *self, const char *format, ...);
 void thorium_actor_log_with_level_implementation(struct thorium_actor *self, int level, const char *format, ...);
 
