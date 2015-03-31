@@ -279,6 +279,12 @@ void biosal_unitig_manager_receive(struct thorium_actor *self, struct thorium_me
 
         i = 0;
         while (i < size) {
+
+            /*
+             * Don't report progress.
+             */
+            break;
+
             visitor = core_vector_at_as_int(&concrete_self->visitors, i);
 
             thorium_actor_send_int(self, visitor,
