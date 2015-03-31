@@ -3,6 +3,8 @@
 
 #include <core/helpers/integer.h>
 
+#include <core/structures/vector.h>
+
 #include <engine/thorium/actor.h>
 
 #include <stdio.h>
@@ -46,7 +48,10 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
 
     if (action == ACTION_START) {
 
-        LOG("tip manager receives ACTION_START.\n");
+        core_int_unpack(&concrete_self->graph_manager_name, buffer);
+
+        LOG("tip manager receives ACTION_START, graph manager is %d\n",
+                        concrete_self->graph_manager_name);
 
         /*
          * - Spawn a manager
@@ -55,7 +60,16 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
          */
         LOG("Removed tips !!");
 
-        thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
+        SEND_REPLY(ACTION_START_REPLY);
+
+        int destination = NAME();
+        struct core_vector vector;
+        core_vector_init(&vector, sizeof(int));
+
+        SEND(destination, ACTION_TEST, TYPE_INT, 9);
+        SEND(destination, ACTION_TEST, TYPE_VECTOR, &vector);
+
+        core_vector_destroy(&vector);
 
         /*
          * Also, kill self.
