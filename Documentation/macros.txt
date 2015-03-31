@@ -1,0 +1,6 @@
+To simplify the utilization of thorium, the following macros are provided:
+
+- NAME() - get the name of the current actor
+- TELL() - send a message to an actor and forget about it (equivalent to ! in Akka)
+- ASK()  - send a message to an actor and provide a continuation (sort of equivalent to ? in Akka)
+- REPLY()
