@@ -14,12 +14,14 @@
 #include "modules/proxy_message.h"
 #include "modules/actions.h"
 #include "modules/send_helpers.h"
+#include "modules/send_macros.h"
 #include "modules/active_message_limit.h"
 #include "modules/stop.h"
 #include "modules/time_in_seconds.h"
 #include "modules/log.h"
 #include "modules/adaptive_actor.h"
 #include "modules/then.h"
+#include "modules/test.h"
 
 /*
  * For priority levels.
@@ -529,5 +531,8 @@ void thorium_actor_print_communication_report(struct thorium_actor *self);
 
 void thorium_actor_increment_counter(struct thorium_actor *self, int event);
 int thorium_actor_get_message_number(struct thorium_actor *self);
+
+#define NAME() \
+        thorium_actor_name(self)
 
 #endif
