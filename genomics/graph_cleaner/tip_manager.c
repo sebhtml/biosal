@@ -46,9 +46,14 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
 
     if (action == ACTION_START) {
 
-        thorium_actor_log(self, "tip manager receives ACTION_START.\n");
+        LOG("tip manager receives ACTION_START.\n");
 
-        thorium_actor_log(self, "Removed tips !!");
+        /*
+         * - Spawn a manager
+         * - Ask it to spawn tip detectors
+         * - Bind them with graph stores (ACTION_SET_PRODUCER)
+         */
+        LOG("Removed tips !!");
 
         thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
 
