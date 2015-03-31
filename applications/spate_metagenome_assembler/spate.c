@@ -200,9 +200,11 @@ void spate_destroy(struct thorium_actor *self)
 
 void spate_receive(struct thorium_actor *self, struct thorium_message *message)
 {
+/*
     printf("Spate actor %d received a message !!!\n", thorium_actor_name(self));
 
     thorium_message_print(message);
+    */
     thorium_actor_take_action(self, message);
 }
 
@@ -568,7 +570,10 @@ void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium
                     spate_start_reply_unitig_manager,
                     concrete_self->unitig_manager);
 
+#ifdef SPATE_DEBUG_UNITIG
     printf("sending ACTION_START to unitig_manager.\n");
+#endif
+
     thorium_actor_send_vector(self, concrete_self->unitig_manager,
                     ACTION_START,
                     &concrete_self->initial_actors);
@@ -576,7 +581,9 @@ void spate_spawn_reply_unitig_manager(struct thorium_actor *self, struct thorium
 
 void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
 {
+#ifdef SPATE_DEBUG_SPAWN
     printf("FOO BAR\n");
+#endif
 
     struct spate *concrete_self;
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
@@ -587,12 +594,16 @@ void spate_start_reply_unitig_manager(struct thorium_actor *self, struct thorium
 
     int spawner = thorium_actor_get_random_spawner(self, &concrete_self->initial_actors);
 
+#ifdef SPATE_DEBUG_SPAWN
     printf("spate will spawn with spawner %d\n",
                     spawner);
+#endif
     thorium_actor_send_then_int(self, spawner, ACTION_SPAWN, SCRIPT_TIP_MANAGER, 
                     spate_callback_1);
 
+#ifdef SPATE_DEBUG_SPAWN
     printf("AFTER SENDING SPAWN REQUEST CAPLOCK\n");
+#endif
 }
 
 void spate_callback_123(struct thorium_actor *self, struct thorium_message *message)
@@ -630,7 +641,9 @@ void spate_callback_1(struct thorium_actor *self, struct thorium_message *messag
 
     core_int_unpack(&concrete_self->tip_manager, buffer);
 
+#ifdef SPATE_DEBUG_SPAWN
     printf("got tip manager name %d\n", concrete_self->tip_manager);
+#endif
 
     /*
      * send a message to an actor, and call a callback locally on the response for

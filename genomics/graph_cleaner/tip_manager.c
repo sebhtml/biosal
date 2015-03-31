@@ -46,7 +46,10 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
 
     if (action == ACTION_START) {
 
-        printf("tip manager receives ACTION_START.\n");
+        thorium_actor_log(self, "tip manager receives ACTION_START.\n");
+
+        thorium_actor_log(self, "Removed tips !!");
+
         thorium_actor_send_reply_empty(self, ACTION_START_REPLY);
 
         /*

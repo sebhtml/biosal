@@ -308,8 +308,10 @@ void thorium_dispatcher_add_action_with_parent(struct thorium_dispatcher *self, 
     if (core_map_get(&self->parent_routes, &key) != NULL)
         return;
 
+#ifdef DISPATCHER_IS_VERBOSE
     printf("XXX add handler for parent message %d:%d\n",
                     parent_actor, parent_message);
+#endif
 
     core_map_add_value(&self->parent_routes, &key, &handler);
 }
@@ -334,7 +336,10 @@ thorium_actor_receive_fn_t thorium_dispatcher_get_with_parent(struct thorium_dis
 
     if (pointer != NULL) {
 
+#ifdef DISPATCHER_IS_VERBOSE
         printf("XXX Got hit for handler !\n");
+#endif
+
         memcpy(&handler, pointer, sizeof(handler));
     }
 

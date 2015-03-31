@@ -14,5 +14,9 @@ fi
 
 mpiexec -n 1 applications/spate_metagenome_assembler/spate -k 25 -threads-per-node 2 \
     velvet/data/test_reads.fa \
-    -enable-actor-log all \
     -o spate_output \
+    -enable-actor-log "biosal_tip_manager" \
+
+exit
+
+    -enable-actor-log all \
