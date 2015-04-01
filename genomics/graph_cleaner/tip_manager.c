@@ -61,15 +61,15 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
         struct core_vector vector;
         core_vector_init(&vector, sizeof(int));
 
-        TELL(destination, ACTION_TEST, TYPE_INT, 9);
-        TELL(destination, ACTION_TEST, TYPE_VECTOR, &vector);
+        TELL(1, destination, ACTION_TEST, TYPE_INT, 9);
+        TELL(1, destination, ACTION_TEST, TYPE_VECTOR, &vector);
 
+        TELL(2, destination, ACTION_TEST, TYPE_INT, 9, TYPE_VECTOR, &vector);
         /*
-        TELL(destination, ACTION_TEST, TYPE_INT, 9, TYPE_VECTOR, &vector);
 */
         core_vector_destroy(&vector);
 
-        TELL(NAME(), ACTION_TEST, TYPE_INT, test_value);
+        TELL(1, NAME(), ACTION_TEST, TYPE_INT, test_value);
 
         concrete_self->done = false;
 
@@ -87,9 +87,11 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
 
         LOG("Tell %d ACTION_START_REPLY",
                         concrete_self->__supervisor);
-        TELL(concrete_self->__supervisor,
+        TELL(1, concrete_self->__supervisor,
                         ACTION_START_REPLY,
                         TYPE_INT, ACTION_START_REPLY);
+
+        TELL(0, NAME(), ACTION_TEST);
 
         /*
          * Also, kill self.

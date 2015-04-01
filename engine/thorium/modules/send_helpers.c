@@ -10,6 +10,7 @@
 
 #include <core/structures/vector_iterator.h>
 #include <core/helpers/vector_helper.h>
+#include <core/helpers/integer.h>
 
 #include <core/system/debugger.h>
 #include <core/system/memory.h>
@@ -383,4 +384,24 @@ void thorium_actor_send_to_self_2_int(struct thorium_actor *actor, int action, i
                     value2);
 }
 
+void thorium_actor_send_int_vector(struct thorium_actor *self, int dst, int action, int value1, struct core_vector *value2)
+{
+    int count;
+    struct thorium_message message;
+    void *buffer;
 
+    count = 0;
+    count += core_int_pack_size(&value1);
+    count += core_vector_pack_size(value2);
+
+    buffer = thorium_actor_allocate(self, count);
+
+    core_int_pack(&value1, buffer);
+    core_vector_pack(value2, buffer);
+
+    thorium_message_init(&message, action, count, buffer);
+
+    thorium_actor_send(self, dst, &message);
+
+    thorium_message_destroy(&message);
+}
