@@ -34,6 +34,11 @@ void tip_manager_destroy(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
 }
 
+void tip_my_callback(struct thorium_actor *self, struct thorium_message *message)
+{
+    /* do nothing */
+}
+
 void tip_manager_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     struct biosal_tip_manager *concrete_self;
@@ -92,6 +97,14 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
                         TYPE_INT, ACTION_START_REPLY);
 
         TELL(0, NAME(), ACTION_TEST);
+
+        struct core_vector vector;
+        core_vector_init(&vector, sizeof(int));
+        struct thorium_message new_message;
+        int data = 99;
+        thorium_message_init(&new_message, ACTION_TEST, sizeof(data), &data);
+        ASK(MSG, NAME(), &new_message, tip_my_callback);
+        core_vector_destroy(&vector);
 
         /*
          * Also, kill self.
