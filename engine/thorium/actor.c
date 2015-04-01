@@ -113,11 +113,15 @@ void thorium_actor_spawn_many(struct thorium_actor *self, struct thorium_message
 
 void thorium_actor_increment_event_counter(struct thorium_actor *self, int event);
 
+int thorium_actor_get_last_message_id_from(struct thorium_actor *self, int name);
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
     thorium_actor_init_fn_t init;
     int capacity;
+
+    core_map_init(&self->last_message_identifiers, sizeof(int), sizeof(int));
 
     /*
      * message_number -1 is reserved for the boot message.
@@ -327,6 +331,8 @@ void thorium_actor_destroy(struct thorium_actor *self)
 
     core_memory_pool_destroy(&self->abstract_memory_pool);
     core_memory_pool_destroy(&self->concrete_memory_pool);
+
+    core_map_destroy(&self->last_message_identifiers);
 }
 
 int thorium_actor_name(struct thorium_actor *self)
@@ -582,6 +588,18 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
     if (current_message != NULL) {
         parent_identifier = thorium_message_get_identifier(current_message);
         parent_actor = thorium_message_source(current_message);
+
+    }
+
+    /*
+     * Overide some things here if the parent actor does not
+     * match.
+     *
+     */
+    if (parent_actor != name) {
+        parent_actor = name;
+
+        parent_identifier = thorium_actor_get_last_message_id_from(self, name);
     }
 
     thorium_message_set_parent_identifier(message, parent_identifier);
@@ -1231,6 +1249,14 @@ void thorium_actor_receive(struct thorium_actor *self, struct thorium_message *m
     uint64_t start;
     uint64_t end;
     uint64_t consumed_virtual_runtime;
+
+    /*
+     * Update the last message identifier.
+     */
+    int id = thorium_message_get_identifier(message);
+    int source = SOURCE(message);
+    if (!core_map_update_value(&self->last_message_identifiers, &source, &id))
+        core_map_add_value(&self->last_message_identifiers, &source, &id);
 
     /*
     CORE_DEBUGGER_ASSERT(thorium_message_get_identifier(message) >= 0);
@@ -2736,4 +2762,13 @@ int thorium_actor_get_message_number(struct thorium_actor *self)
     */
 
     return value;
+}
+
+int thorium_actor_get_last_message_id_from(struct thorium_actor *self, int name)
+{
+    int id = -1;
+
+    core_map_get_value(&self->last_message_identifiers, &name, &id);
+
+    return id;
 }

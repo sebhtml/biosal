@@ -43,6 +43,7 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /*
  * Enable actor locks.
@@ -321,6 +322,7 @@ struct thorium_actor {
 #endif
 
     struct core_queue enqueued_messages;
+    struct core_map last_message_identifiers;
 
     struct thorium_dispatcher dispatcher;
     struct thorium_message *current_message;
