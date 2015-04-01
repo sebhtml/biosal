@@ -8,6 +8,7 @@
 
 #include <core/helpers/bitmap.h>
 #include <core/system/packer.h>
+#include <core/system/debugger.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -634,6 +635,8 @@ void *core_hash_table_get(struct core_hash_table *table, void *key)
     int bucket_in_group;
     int code;
     uint64_t last_stride;
+
+    CORE_DEBUGGER_ASSERT_NOT_NULL(table);
 
     if (table->groups == NULL) {
         return NULL;
