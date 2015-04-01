@@ -44,14 +44,39 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
     concrete_self = thorium_actor_concrete_actor(self);
 
     action = thorium_message_action(message);
-    buffer = thorium_message_buffer(message);
+    buffer = BUFFER(message);
 
     if (action == ACTION_START) {
+
+        concrete_self->__supervisor = SOURCE(message);
 
         core_int_unpack(&concrete_self->graph_manager_name, buffer);
 
         LOG("tip manager receives ACTION_START, graph manager is %d\n",
                         concrete_self->graph_manager_name);
+
+        int test_value = 33;
+
+        int destination = NAME();
+        struct core_vector vector;
+        core_vector_init(&vector, sizeof(int));
+
+        TELL(destination, ACTION_TEST, TYPE_INT, 9);
+        TELL(destination, ACTION_TEST, TYPE_VECTOR, &vector);
+
+        /*
+        TELL(destination, ACTION_TEST, TYPE_INT, 9, TYPE_VECTOR, &vector);
+*/
+        core_vector_destroy(&vector);
+
+        TELL(NAME(), ACTION_TEST, TYPE_INT, test_value);
+
+        concrete_self->done = false;
+
+    } else if (action == ACTION_TEST
+                    && !concrete_self->done) {
+
+        concrete_self->done = true;
 
         /*
          * - Spawn a manager
@@ -60,16 +85,11 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
          */
         LOG("Removed tips !!");
 
-        SEND_REPLY(ACTION_START_REPLY);
-
-        int destination = NAME();
-        struct core_vector vector;
-        core_vector_init(&vector, sizeof(int));
-
-        SEND(destination, ACTION_TEST, TYPE_INT, 9);
-        SEND(destination, ACTION_TEST, TYPE_VECTOR, &vector);
-
-        core_vector_destroy(&vector);
+        LOG("Tell %d ACTION_START_REPLY",
+                        concrete_self->__supervisor);
+        TELL(concrete_self->__supervisor,
+                        ACTION_START_REPLY,
+                        TYPE_INT, ACTION_START_REPLY);
 
         /*
          * Also, kill self.

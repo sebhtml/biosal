@@ -6,6 +6,9 @@
 
 struct biosal_tip_manager {
     int graph_manager_name;
+
+    int __supervisor;
+    int done;
 };
 
 extern struct thorium_script biosal_tip_manager_script;
