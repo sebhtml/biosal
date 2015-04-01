@@ -201,4 +201,13 @@ uint64_t thorium_message_signature(struct thorium_message *self);
 void thorium_message_set_routing_destination_node(struct thorium_message *self, int destination);
 void thorium_message_set_routing_source_node(struct thorium_message *self, int source);
 
+#define SOURCE(self) \
+        thorium_message_source(self)
+
+#define BUFFER(self) \
+        thorium_message_buffer(self)
+
+#define COUNT(self) \
+        thorium_message_count(self)
+
 #endif
