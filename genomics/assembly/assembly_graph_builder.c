@@ -218,6 +218,9 @@ void biosal_assembly_graph_builder_receive(struct thorium_actor *self, struct th
     int action = thorium_message_action(message);
     thorium_actor_take_action(self, message);
 
+    LOG("receive() %d:%d", thorium_message_source(message),
+                    thorium_message_get_identifier(message));
+
     if (action == ACTION_SET_PRODUCER) {
 
         /*
@@ -285,6 +288,8 @@ void biosal_assembly_graph_builder_start(struct thorium_actor *self, struct thor
      */
     concrete_self->manager_for_graph_stores = THORIUM_ACTOR_SPAWNING_IN_PROGRESS;
 
+    LOG("XXX debug %d send to spawner %d\n", NAME(), spawner);
+
     thorium_actor_send_then_int(self, spawner, ACTION_SPAWN, SCRIPT_MANAGER,
                     biosal_assembly_graph_builder_spawn_reply_graph_store_manager);
 }
@@ -293,11 +298,16 @@ void biosal_assembly_graph_builder_spawn_reply_graph_store_manager(struct thoriu
 {
     struct biosal_assembly_graph_builder *concrete_self;
 
+    LOG("XXX callback, src %d", SRC(message));
+
     concrete_self = thorium_actor_concrete_actor(self);
 
     /*
      * Configure the manager for graph stores
+     * Make sure that this callback is only used once.
      */
+
+    CORE_DEBUGGER_ASSERT(concrete_self->manager_for_graph_stores == THORIUM_ACTOR_SPAWNING_IN_PROGRESS);
 
     thorium_message_unpack_int(message, 0, &concrete_self->manager_for_graph_stores);
 

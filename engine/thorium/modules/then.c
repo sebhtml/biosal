@@ -22,8 +22,10 @@ void thorium_actor_send_then(struct thorium_actor *self, int destination,
     int parent_actor = thorium_message_source(message);
     int parent_message = thorium_message_get_identifier(message);
 
+    LOG("XXX ASK... registering message %d:%d", parent_actor, parent_message);
+
     /*
-     * TODO: register the information so that the callback is invoked
+     * Register the information so that the callback is invoked
      * when the response arrives.
      *
      * the key is parent_actor + parent_message and the value is handler.

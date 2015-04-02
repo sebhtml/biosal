@@ -210,4 +210,6 @@ void thorium_message_set_routing_source_node(struct thorium_message *self, int s
 #define COUNT(self) \
         thorium_message_count(self)
 
+#define SRC SOURCE
+
 #endif
