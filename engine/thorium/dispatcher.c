@@ -356,7 +356,10 @@ thorium_actor_receive_fn_t thorium_dispatcher_get_with_parent(struct thorium_dis
         /*
          * Remove entry.
          */
+        /*
         core_map_delete(&self->parent_routes, &key);
+        */
+
     }
 
     return handler;
