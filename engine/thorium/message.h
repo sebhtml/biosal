@@ -85,13 +85,15 @@
  * - number
  * - source_actor
  * - destination_actor
+ * - parent_actor
+ * - parent_message_id
  *
  * - routing_source
  * - routing_destination
  *
  * - tracepoint stuff (disabled by default)
  */
-#define THORIUM_MESSAGE_METADATA_SIZE (5 * sizeof(int) + ROUTING_SIZE + TRACEPOINT_SIZE)
+#define THORIUM_MESSAGE_METADATA_SIZE (6 * sizeof(int) + ROUTING_SIZE + TRACEPOINT_SIZE)
 
 /*
  * This is a message.
@@ -211,5 +213,12 @@ void thorium_message_set_routing_source_node(struct thorium_message *self, int s
         thorium_message_count(self)
 
 #define SRC SOURCE
+
+#define ACTION(self) \
+        thorium_message_action(self)
+
+#define DESTINATION thorium_message_destination
+
+#define DST DESTINATION
 
 #endif
