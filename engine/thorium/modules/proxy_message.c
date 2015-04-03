@@ -53,6 +53,10 @@ void thorium_actor_unpack_proxy_message(struct thorium_actor *self,
     thorium_message_set_action(message, tag);
     thorium_message_set_count(message, new_count);
 
+    thorium_message_set_identifier(message, -1);
+    thorium_message_set_parent_actor(message, -1);
+    thorium_message_set_parent_identifier(message, -1);
+
 #if 0
     printf("DEBUG unpack_proxy_message... source %d tag %d count %d\n",
                     source, tag, new_count);
