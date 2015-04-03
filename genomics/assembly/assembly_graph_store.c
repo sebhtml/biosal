@@ -246,6 +246,13 @@ void biosal_assembly_graph_store_receive(struct thorium_actor *self, struct thor
          */
         core_map_set_threshold(&concrete_self->table, 0.95);
 
+        /*
+        if (NAME() == 1000066) {
+            printf("DEBUG849 graph store ");
+            thorium_message_print(message);
+        }
+        */
+
         thorium_actor_send_reply_empty(self, ACTION_SET_KMER_LENGTH_REPLY);
 
     } else if (tag == ACTION_ASSEMBLY_GET_KMER_LENGTH) {
