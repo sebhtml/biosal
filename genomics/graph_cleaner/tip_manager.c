@@ -26,12 +26,16 @@ void tip_manager_init(struct thorium_actor *self)
 {
     struct biosal_tip_manager *concrete_self;
     concrete_self = thorium_actor_concrete_actor(self);
+
+    core_vector_init(&concrete_self->spawners, sizeof(int));
 }
 
 void tip_manager_destroy(struct thorium_actor *self)
 {
     struct biosal_tip_manager *concrete_self;
     concrete_self = thorium_actor_concrete_actor(self);
+
+    core_vector_destroy(&concrete_self->spawners);
 }
 
 void tip_my_callback(struct thorium_actor *self, struct thorium_message *message)
@@ -88,13 +92,15 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
          * - Ask it to spawn tip detectors
          * - Bind them with graph stores (ACTION_SET_PRODUCER)
          */
+        /*
         LOG("Removed tips !!");
+        */
 
         LOG("Tell %d ACTION_START_REPLY",
                         concrete_self->__supervisor);
-        TELL(1, concrete_self->__supervisor,
-                        ACTION_START_REPLY,
-                        TYPE_INT, ACTION_START_REPLY);
+
+        int spawner = thorium_actor_get_random_spawner(self,
+                        &concrete_self->spawners);
 
         TELL(0, NAME(), ACTION_TEST);
 
@@ -115,5 +121,11 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
 
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
     }
+
+        TELL(1, concrete_self->__supervisor,
+                        ACTION_START_REPLY,
+                        TYPE_INT, ACTION_START_REPLY);
+
+
 }
 
