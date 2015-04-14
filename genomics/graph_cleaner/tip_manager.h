@@ -6,6 +6,9 @@
 
 #define SCRIPT_TIP_MANAGER 0xa2661578
 
+/**
+ * A tip manager is responsible for removing tips in the graph.
+ */
 struct biosal_tip_manager {
     int graph_manager_name;
 

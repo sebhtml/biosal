@@ -4,7 +4,7 @@
 #include <core/helpers/integer.h>
 
 #include <core/structures/vector.h>
-
+#include <core/patterns/manager.h>
 #include <engine/thorium/actor.h>
 
 #include <stdio.h>
@@ -43,6 +43,8 @@ void tip_my_callback(struct thorium_actor *self, struct thorium_message *message
     /* do nothing */
 }
 
+void tip_manager_callback_x(struct thorium_actor *self, struct thorium_message *message);
+
 void tip_manager_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     struct biosal_tip_manager *concrete_self;
@@ -64,6 +66,12 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
         LOG("tip manager receives ACTION_START, graph manager is %d\n",
                         concrete_self->graph_manager_name);
 
+        struct thorium_message new_message;
+        thorium_message_init(&new_message, ACTION_TEST, 0, NULL);
+
+        ASK(MSG, NAME(), &new_message, tip_manager_callback_x);
+
+#if 0
         int test_value = 33;
 
         int destination = NAME();
@@ -80,6 +88,8 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
 
         TELL(1, NAME(), ACTION_TEST, TYPE_INT, test_value);
 
+
+#endif
         concrete_self->done = false;
 
     } else if (action == ACTION_TEST
@@ -96,9 +106,9 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
         LOG("Removed tips !!");
         */
 
-        LOG("Tell %d ACTION_START_REPLY",
-                        concrete_self->__supervisor);
+        REPLY(0, ACTION_TEST);
 
+#if 0
         int spawner = thorium_actor_get_random_spawner(self,
                         &concrete_self->spawners);
 
@@ -112,6 +122,7 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
         ASK(MSG, NAME(), &new_message, tip_my_callback);
         core_vector_destroy(&vector);
 
+#endif
         /*
          * Also, kill self.
          */
@@ -120,12 +131,37 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
         thorium_actor_send_reply_empty(self, ACTION_ASK_TO_STOP_REPLY);
 
         thorium_actor_send_to_self_empty(self, ACTION_STOP);
+    } else {
+        thorium_actor_take_action(self, message);
     }
-
-        TELL(1, concrete_self->__supervisor,
-                        ACTION_START_REPLY,
-                        TYPE_INT, ACTION_START_REPLY);
-
 
 }
 
+void tip_manager_callback_y(struct thorium_actor *self, struct thorium_message *message);
+
+void tip_manager_callback_x(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct biosal_tip_manager *concrete_self;
+    concrete_self = thorium_actor_concrete_actor(self);
+
+
+    ASK(0, concrete_self->graph_manager_name, ACTION_GET_SPAWNERS, tip_manager_callback_y);
+}
+
+void tip_manager_callback_y(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct biosal_tip_manager *concrete_self;
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    core_vector_unpack(&concrete_self->spawners,
+                    BUFFER(message));
+
+    LOG("got spawner list");
+
+    LOG("Tell %d ACTION_START_REPLY",
+                        concrete_self->__supervisor);
+
+    TELL(1, concrete_self->__supervisor,
+                        ACTION_START_REPLY,
+                        TYPE_INT, ACTION_START_REPLY);
+}
