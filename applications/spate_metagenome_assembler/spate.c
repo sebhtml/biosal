@@ -616,6 +616,8 @@ void spate_callback_123(struct thorium_actor *self, struct thorium_message *mess
 }
 
 
+void spate_callback_123(struct thorium_actor *self, struct thorium_message *message);
+
 void spate_callback_xyz(struct thorium_actor *self, struct thorium_message *message)
 {
     struct spate *concrete_self;
@@ -629,21 +631,37 @@ void spate_callback_xyz(struct thorium_actor *self, struct thorium_message *mess
                     spate_callback_123);
 }
 
+void spate_callback_foo(struct thorium_actor *self, struct thorium_message *message);
+
 void spate_callback_1(struct thorium_actor *self, struct thorium_message *message)
 {
     struct spate *concrete_self;
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
     void *buffer = thorium_message_buffer(message);
 
-    /* This is the SPOC (single point of contact) for everything related to graphs).
-     */
-    int graph_manager = -1;
-
     core_int_unpack(&concrete_self->tip_manager, buffer);
 
 #ifdef SPATE_DEBUG_SPAWN
     printf("got tip manager name %d\n", concrete_self->tip_manager);
 #endif
+
+    thorium_actor_send_then_empty(self, concrete_self->assembly_graph_builder,
+                    ACTION_GET_MANAGER, spate_callback_foo);
+
+}
+
+void spate_callback_foo(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct spate *concrete_self;
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    /* This is the SPOC (single point of contact) for everything related to graphs).
+     */
+    int graph_manager = -1;
+
+    thorium_message_unpack_int(message, 0, &graph_manager);
+
+    CORE_DEBUGGER_ASSERT(graph_manager != THORIUM_ACTOR_NO_VALUE);
 
     /*
      * send a message to an actor, and call a callback locally on the response for
@@ -655,9 +673,7 @@ void spate_callback_1(struct thorium_actor *self, struct thorium_message *messag
      */
     thorium_actor_send_then_int(self, concrete_self->tip_manager, ACTION_START,
                     graph_manager, spate_callback_xyz);
-
 }
-
 
 
 void spate_set_producers_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
