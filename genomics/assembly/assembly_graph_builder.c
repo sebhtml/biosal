@@ -216,6 +216,9 @@ void biosal_assembly_graph_builder_destroy(struct thorium_actor *self)
 void biosal_assembly_graph_builder_receive(struct thorium_actor *self, struct thorium_message *message)
 {
     int action = thorium_message_action(message);
+    struct biosal_assembly_graph_builder *concrete_self;
+
+    concrete_self = thorium_actor_concrete_actor(self);
     thorium_actor_take_action(self, message);
 
     LOG("receive() %d:%d", thorium_message_source(message),
@@ -230,6 +233,9 @@ void biosal_assembly_graph_builder_receive(struct thorium_actor *self, struct th
                         "XXX graph builder received ACTION_SET_PRODUCER, responding with ACTION_SET_PRODUCER_REPLY.\n");
 
         thorium_actor_send_reply_empty(self, ACTION_SET_PRODUCER_REPLY);
+    } else if (action == ACTION_GET_MANAGER) {
+
+        REPLY(1, ACTION_GET_MANAGER, TYPE_INT, concrete_self->manager_for_graph_stores);
     }
 }
 
