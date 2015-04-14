@@ -369,7 +369,9 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                 core_vector_pack(&all_stores, new_buffer);
 
                 /*
-                 * Save the list of actors for later
+                 * Save the list of actors for later.
+                 *
+                 * This will be useful for ACTION_GET_SPAWNED_ACTORS...
                  */
                 core_vector_push_back_vector(&concrete_actor->children,
                                 &all_stores);
@@ -411,6 +413,10 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
     } else if (tag == ACTION_GET_SPAWNERS) {
 
         REPLY(1, ACTION_GET_SPAWNERS_REPLY, TYPE_VECTOR, &concrete_actor->spawners);
+
+    } else if (tag == ACTION_GET_SPAWNED_ACTORS) {
+
+        REPLY(1, ACTION_GET_SPAWNED_ACTORS_REPLY, TYPE_VECTOR, &concrete_actor->children);
     }
 }
 
