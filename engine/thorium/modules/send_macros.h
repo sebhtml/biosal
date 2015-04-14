@@ -84,6 +84,8 @@
 #define __ASK_MSG(destination, message, callback) \
         thorium_actor_send_then(self, destination, message, callback)
 
+#define __ASK_0(destination, action, callback) \
+        thorium_actor_send_then_empty(self, destination, action, callback)
 
 #endif /* __SEND_MACROS */
 
