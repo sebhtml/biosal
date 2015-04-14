@@ -15,6 +15,10 @@ struct biosal_tip_manager {
     int __supervisor;
     int done;
 
+    int tip_detector_manager;
+    struct core_vector tip_detectors;
+    struct core_vector graph_stores;
+
     struct core_vector spawners;
 };
 

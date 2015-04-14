@@ -28,6 +28,8 @@ void tip_manager_init(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
 
     core_vector_init(&concrete_self->spawners, sizeof(int));
+    core_vector_init(&concrete_self->graph_stores, sizeof(int));
+    core_vector_init(&concrete_self->tip_detectors, sizeof(int));
 }
 
 void tip_manager_destroy(struct thorium_actor *self)
@@ -36,6 +38,8 @@ void tip_manager_destroy(struct thorium_actor *self)
     concrete_self = thorium_actor_concrete_actor(self);
 
     core_vector_destroy(&concrete_self->spawners);
+    core_vector_destroy(&concrete_self->graph_stores);
+    core_vector_destroy(&concrete_self->tip_detectors);
 }
 
 void tip_my_callback(struct thorium_actor *self, struct thorium_message *message)
@@ -148,6 +152,8 @@ void tip_manager_callback_x(struct thorium_actor *self, struct thorium_message *
     ASK(0, concrete_self->graph_manager_name, ACTION_GET_SPAWNERS, tip_manager_callback_y);
 }
 
+void tip_manager_callback_8(struct thorium_actor *self, struct thorium_message *message);
+
 void tip_manager_callback_y(struct thorium_actor *self, struct thorium_message *message)
 {
     struct biosal_tip_manager *concrete_self;
@@ -160,6 +166,17 @@ void tip_manager_callback_y(struct thorium_actor *self, struct thorium_message *
 
     LOG("Tell %d ACTION_START_REPLY",
                         concrete_self->__supervisor);
+
+    ASK(0, concrete_self->graph_manager_name, ACTION_GET_SPAWNED_ACTORS, tip_manager_callback_8);
+
+}
+
+void tip_manager_callback_8(struct thorium_actor *self, struct thorium_message *message)
+{
+    struct biosal_tip_manager *concrete_self;
+    concrete_self = thorium_actor_concrete_actor(self);
+
+    core_vector_unpack(&concrete_self->graph_stores, BUFFER(message));
 
     TELL(1, concrete_self->__supervisor,
                         ACTION_START_REPLY,
