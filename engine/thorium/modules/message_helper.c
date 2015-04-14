@@ -3,6 +3,8 @@
 
 #include <engine/thorium/message.h>
 
+#include <core/system/debugger.h>
+
 #include <stdint.h>
 
 int thorium_message_unpack_int(struct thorium_message *message, int offset, int *value)
@@ -10,6 +12,9 @@ int thorium_message_unpack_int(struct thorium_message *message, int offset, int 
     int bytes;
     void *buffer;
     int *pointer;
+
+    CORE_DEBUGGER_ASSERT(offset < thorium_message_count(message));
+    CORE_DEBUGGER_ASSERT((int)(offset + sizeof(int)) <= thorium_message_count(message));
 
     if (offset >= thorium_message_count(message)) {
         return -1;
