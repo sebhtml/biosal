@@ -9,6 +9,9 @@
 
 #define SCRIPT_MANAGER 0xe41954c7
 
+#define ACTION_GET_SPAWNERS 0x00065fc5
+#define ACTION_GET_SPAWNERS_REPLY 0x002fd38f
+
 /**
  * How to use:
  *
@@ -36,7 +39,7 @@ struct core_manager {
     struct core_map spawner_children;
     struct core_map spawner_child_count;
     int ready_spawners;
-    int spawners;
+    int spawner_count;
     struct core_vector indices;
     int script;
 
@@ -45,6 +48,7 @@ struct core_manager {
     int workers_per_actor;
 
     struct core_vector children;
+    struct core_vector spawners;
 };
 
 #define ACTION_MANAGER_SET_SCRIPT 0x00007595

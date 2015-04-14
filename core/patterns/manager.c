@@ -66,7 +66,7 @@ void core_manager_init(struct thorium_actor *actor)
                     thorium_actor_get_persistent_memory_pool(actor));
 
     concrete_actor->ready_spawners = 0;
-    concrete_actor->spawners = 0;
+    concrete_actor->spawner_count = 0;
     concrete_actor->actors_per_spawner = THORIUM_ACTOR_NO_VALUE;
     concrete_actor->actors_per_worker = THORIUM_ACTOR_NO_VALUE;
     concrete_actor->workers_per_actor = THORIUM_ACTOR_NO_VALUE;
@@ -103,7 +103,6 @@ void core_manager_destroy(struct thorium_actor *actor)
 void core_manager_receive(struct thorium_actor *actor, struct thorium_message *message)
 {
     int tag;
-    struct core_vector spawners;
     struct core_vector_iterator iterator;
     int *bucket;
     int index;
@@ -151,17 +150,17 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                         thorium_actor_name(actor));
 #endif
 
-        core_vector_init(&spawners, 0);
-        core_vector_set_memory_pool(&spawners, ephemeral_memory);
-        core_vector_unpack(&spawners, buffer);
+        core_vector_init(&concrete_actor->spawners, 0);
+        //core_vector_set_memory_pool(&concrete_actor->spawners, ephemeral_memory);
+        core_vector_unpack(&concrete_actor->spawners, buffer);
 
-        concrete_actor->spawners = core_vector_size(&spawners);
+        concrete_actor->spawner_count = core_vector_size(&concrete_actor->spawners);
 
         thorium_actor_log(self, "DEBUG manager %d starts, supervisor is %d, %d spawners provided\n",
                         thorium_actor_name(actor), thorium_actor_supervisor(actor),
-                        (int)core_vector_size(&spawners));
+                        (int)core_vector_size(&concrete_actor->spawners));
 
-        core_vector_iterator_init(&iterator, &spawners);
+        core_vector_iterator_init(&iterator, &concrete_actor->spawners);
 
         while (core_vector_iterator_has_next(&iterator)) {
 
@@ -195,7 +194,7 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         }
 
         core_vector_iterator_destroy(&iterator);
-        core_vector_destroy(&spawners);
+        core_vector_destroy(&concrete_actor->spawners);
 
     } else if (tag == ACTION_MANAGER_SET_SCRIPT) {
 
@@ -335,10 +334,10 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
             thorium_actor_log(self, "DEBUG manager %d says that spawner %d is ready, %d/%d (spawned %d actors)",
                         thorium_actor_name(actor), source,
-                        concrete_actor->ready_spawners, concrete_actor->spawners,
+                        concrete_actor->ready_spawners, concrete_actor->spawner_count,
                         (int)core_vector_size(stores));
 
-            if (concrete_actor->ready_spawners == concrete_actor->spawners) {
+            if (concrete_actor->ready_spawners == concrete_actor->spawner_count) {
 
                 thorium_actor_log(self, "DEBUG manager %d says that all spawners are ready",
                         thorium_actor_name(actor));
@@ -409,6 +408,9 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
 
         thorium_actor_send_reply_empty(actor, ACTION_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
 
+    } else if (tag == ACTION_GET_SPAWNERS) {
+
+        REPLY(1, ACTION_GET_SPAWNERS_REPLY, TYPE_VECTOR, &concrete_actor->spawners);
     }
 }
 
