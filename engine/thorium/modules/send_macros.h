@@ -87,5 +87,11 @@
 #define __ASK_0(destination, action, callback) \
         thorium_actor_send_then_empty(self, destination, action, callback)
 
+#define __ASK_1(destination, action, callback, type1, object1) \
+        __ASK_1_ ## type1(destination, action, callback, object1)
+
+#define __ASK_1_TYPE_INT(destination, action, callback, object1) \
+        thorium_actor_send_then_int(self, destination, action, object1, callback)
+
 #endif /* __SEND_MACROS */
 
