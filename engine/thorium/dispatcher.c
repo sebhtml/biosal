@@ -17,9 +17,9 @@
 
 /*
 #define THORIUM_DISPATCHER_DEBUG_10335
+#define DISPATCHER_IS_VERBOSE
 */
 
-#define DISPATCHER_IS_VERBOSE
 
 struct thorium_parent_key {
     int parent_actor;
