@@ -36,7 +36,6 @@
  * will reply with ACTION_START_REPLY and the buffer will
  * contain a vector of spawned actors (spawned using the provided spawners).
  *
- *
  */
 struct core_manager {
     struct core_map spawner_children;

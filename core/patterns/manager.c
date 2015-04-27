@@ -51,6 +51,7 @@ void core_manager_init(struct thorium_actor *actor)
     concrete_actor = (struct core_manager *)thorium_actor_concrete_actor(actor);
 
     core_vector_init(&concrete_actor->children, sizeof(int));
+    core_vector_init(&concrete_actor->spawners, sizeof(int));
 
     /*
      * Register the route for stopping
@@ -98,6 +99,7 @@ void core_manager_destroy(struct thorium_actor *actor)
     core_map_destroy(&concrete_actor->spawner_children);
 
     core_vector_destroy(&concrete_actor->indices);
+    core_vector_destroy(&concrete_actor->spawners);
 }
 
 void core_manager_receive(struct thorium_actor *actor, struct thorium_message *message)
@@ -150,7 +152,6 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
                         thorium_actor_name(actor));
 #endif
 
-        core_vector_init(&concrete_actor->spawners, 0);
         //core_vector_set_memory_pool(&concrete_actor->spawners, ephemeral_memory);
         core_vector_unpack(&concrete_actor->spawners, buffer);
 
@@ -194,7 +195,6 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         }
 
         core_vector_iterator_destroy(&iterator);
-        core_vector_destroy(&concrete_actor->spawners);
 
     } else if (tag == ACTION_MANAGER_SET_SCRIPT) {
 
@@ -411,6 +411,8 @@ void core_manager_receive(struct thorium_actor *actor, struct thorium_message *m
         thorium_actor_send_reply_empty(actor, ACTION_MANAGER_SET_WORKERS_PER_ACTOR_REPLY);
 
     } else if (tag == ACTION_GET_SPAWNERS) {
+
+        LOG("Spawner count = %d", (int)core_vector_size(&concrete_actor->spawners));
 
         REPLY(1, ACTION_GET_SPAWNERS_REPLY, TYPE_VECTOR, &concrete_actor->spawners);
 
