@@ -3,6 +3,7 @@
 
 #include <engine/thorium/actor.h>
 #include <engine/thorium/message.h>
+#include <core/system/debugger.h>
 
 #include <stdio.h>
 
@@ -17,11 +18,16 @@ void thorium_actor_send_reply_then(struct thorium_actor *self,
 void thorium_actor_send_then(struct thorium_actor *self, int destination,
                 struct thorium_message *message, thorium_actor_receive_fn_t handler)
 {
+    CORE_DEBUGGER_ASSERT(destination != THORIUM_ACTOR_NOBODY);
+    CORE_DEBUGGER_ASSERT(NAME() != THORIUM_ACTOR_NOBODY);
+
     thorium_actor_send(self, destination, message);
 
     int parent_actor = thorium_message_source(message);
     int parent_message = thorium_message_get_identifier(message);
 
+    /*
+    */
     LOG("XXX ASK... registering message %d:%d", parent_actor, parent_message);
 
     /*
