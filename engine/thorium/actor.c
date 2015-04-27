@@ -600,6 +600,11 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         parent_actor = name;
 
         parent_identifier = thorium_actor_get_last_message_id_from(self, name);
+
+        /*
+        LOG("INFO last message received from %d was %d:%d\n",
+                        name, name, parent_identifier);
+                        */
     }
 
     thorium_message_set_parent_identifier(message, parent_identifier);
