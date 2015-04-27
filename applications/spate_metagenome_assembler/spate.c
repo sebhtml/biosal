@@ -201,10 +201,10 @@ void spate_destroy(struct thorium_actor *self)
 void spate_receive(struct thorium_actor *self, struct thorium_message *message)
 {
 /*
+    */
     printf("Spate actor %d received a message !!!\n", thorium_actor_name(self));
 
     thorium_message_print(message);
-    */
     thorium_actor_take_action(self, message);
 }
 
@@ -623,6 +623,8 @@ void spate_callback_xyz(struct thorium_actor *self, struct thorium_message *mess
     struct spate *concrete_self;
     concrete_self = (struct spate *)thorium_actor_concrete_actor(self);
 
+    LOG("Killing tip manager");
+
     /*
      * Tips are now removed.
      * Kill the tip manager now.
@@ -671,10 +673,12 @@ void spate_callback_foo(struct thorium_actor *self, struct thorium_message *mess
      * the header of the message will contain all the bits required to know to which
      * request the response is for.
      */
+
+    LOG("Telling tip_manager ACTION_START");
+
     thorium_actor_send_then_int(self, concrete_self->tip_manager, ACTION_START,
                     graph_manager, spate_callback_xyz);
 }
-
 
 void spate_set_producers_reply_unitig_manager(struct thorium_actor *self, struct thorium_message *message)
 {
