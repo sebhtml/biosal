@@ -115,11 +115,16 @@ void thorium_actor_increment_event_counter(struct thorium_actor *self, int event
 
 int thorium_actor_get_last_message_id_from(struct thorium_actor *self, int name);
 
+void thorium_actor_check_fake_identifiers(struct thorium_actor *self, int *actor, int *message);
+
 void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
                 struct thorium_script *script, int name, struct thorium_node *node)
 {
     thorium_actor_init_fn_t init;
     int capacity;
+
+    self->fake_current_message_source = THORIUM_ACTOR_NO_VALUE;
+    self->fake_current_message_identifier = THORIUM_ACTOR_NO_VALUE;
 
     core_map_init(&self->last_message_identifiers, sizeof(int), sizeof(int));
 
@@ -246,6 +251,8 @@ void thorium_actor_init(struct thorium_actor *self, void *concrete_actor,
     init(self);
 
     CORE_DEBUGGER_ASSERT(self->name != THORIUM_ACTOR_NOBODY);
+
+
 }
 
 void thorium_actor_destroy(struct thorium_actor *self)
@@ -602,13 +609,24 @@ void thorium_actor_send(struct thorium_actor *self, int name, struct thorium_mes
         parent_identifier = thorium_actor_get_last_message_id_from(self, name);
 
         /*
-        LOG("INFO last message received from %d was %d:%d\n",
+        LOG("INFO %d:%d last message received from %d was %d:%d\n",
+                        NAME(), id,
                         name, name, parent_identifier);
                         */
     }
 
-    thorium_message_set_parent_identifier(message, parent_identifier);
+    /*
+     * Verify if fake identifiers must be used.
+     */
+    thorium_actor_check_fake_identifiers(self, &parent_actor, &parent_identifier);
+
     thorium_message_set_parent_actor(message, parent_actor);
+    thorium_message_set_parent_identifier(message, parent_identifier);
+
+    /*
+    LOG("tagging message %d:%d with parent %d:%d",
+                    NAME(), id, parent_actor, parent_identifier);
+                    */
 
     source = thorium_actor_name(self);
 
@@ -1397,6 +1415,9 @@ static void thorium_actor_receive_private(struct thorium_actor *self, struct tho
     receive(self, message);
 
     self->current_message = NULL;
+
+    self->fake_current_message_source = THORIUM_ACTOR_NO_VALUE;
+    self->fake_current_message_identifier = THORIUM_ACTOR_NO_VALUE;
 }
 
 #if 0
@@ -2776,4 +2797,34 @@ int thorium_actor_get_last_message_id_from(struct thorium_actor *self, int name)
     core_map_get_value(&self->last_message_identifiers, &name, &id);
 
     return id;
+}
+
+void thorium_actor_check_fake_identifiers(struct thorium_actor *self, int *actor, int *message)
+{
+    /*
+     * If the fake identifiers are set, use them.
+     */
+    if (self->fake_current_message_source != THORIUM_ACTOR_NO_VALUE) {
+
+        *actor = self->fake_current_message_source;
+        *message = self->fake_current_message_identifier;
+
+        self->fake_current_message_source = THORIUM_ACTOR_NO_VALUE;
+        self->fake_current_message_identifier = THORIUM_ACTOR_NO_VALUE;
+
+        LOG("FAKING source message: using %d:%d", *actor, *message);
+    }
+}
+
+void thorium_actor_set_current_message_identifiers(struct thorium_actor *self,
+                int actor, int message)
+{
+    CORE_DEBUGGER_ASSERT(self->fake_current_message_source == THORIUM_ACTOR_NO_VALUE);
+    CORE_DEBUGGER_ASSERT(self->fake_current_message_identifier == THORIUM_ACTOR_NO_VALUE);
+
+    CORE_DEBUGGER_ASSERT(actor != THORIUM_ACTOR_NO_VALUE);
+    CORE_DEBUGGER_ASSERT(message != THORIUM_ACTOR_NO_VALUE);
+
+    self->fake_current_message_source = actor;
+    self->fake_current_message_identifier = message;
 }

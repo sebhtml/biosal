@@ -236,7 +236,7 @@ new name.
 #define THORIUM_ACTOR_ANYBODY (-2)
 #define THORIUM_ACTOR_SPAWNING_IN_PROGRESS (-3)
 
-#define THORIUM_ACTOR_NO_VALUE -1
+#define THORIUM_ACTOR_NO_VALUE (-1)
 
 /*
  ********************************************
@@ -326,6 +326,9 @@ struct thorium_actor {
 
     struct thorium_dispatcher dispatcher;
     struct thorium_message *current_message;
+
+    int fake_current_message_source;
+    int fake_current_message_identifier;
     void *concrete_actor;
 
 #ifdef THORIUM_ACTOR_ENABLE_LOCK
@@ -536,5 +539,8 @@ int thorium_actor_get_message_number(struct thorium_actor *self);
 
 #define NAME() \
         thorium_actor_name(self)
+
+void thorium_actor_set_current_message_identifiers(struct thorium_actor *self,
+                int actor, int message);
 
 #endif
