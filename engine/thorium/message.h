@@ -214,6 +214,9 @@ void thorium_message_set_routing_source_node(struct thorium_message *self, int s
 
 #define SRC SOURCE
 
+#define MSGID(self) \
+        thorium_message_get_identifier(self)
+
 #define ACTION(self) \
         thorium_message_action(self)
 
