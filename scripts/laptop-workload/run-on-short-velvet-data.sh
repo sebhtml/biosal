@@ -10,6 +10,7 @@ then
 fi
 
 cores=2
+cores=1
 
 make -j applications/spate_metagenome_assembler/spate
 
@@ -23,7 +24,7 @@ then
     rm -rf spate_output
 fi
 
-mpiexec -n 1 applications/spate_metagenome_assembler/spate -k 25 -threads-per-node $cores \
+mpiexec -n $cores applications/spate_metagenome_assembler/spate -k 25 -threads-per-node $cores \
     velvet/data/test_reads.fa \
     -o spate_output \
     -enable-actor-log "biosal_tip_manager" \
