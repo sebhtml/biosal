@@ -201,10 +201,10 @@ void spate_destroy(struct thorium_actor *self)
 void spate_receive(struct thorium_actor *self, struct thorium_message *message)
 {
 /*
-    */
     printf("Spate actor %d received a message !!!\n", thorium_actor_name(self));
 
     thorium_message_print(message);
+    */
     thorium_actor_take_action(self, message);
 }
 
