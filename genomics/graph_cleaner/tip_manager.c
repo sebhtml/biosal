@@ -75,17 +75,22 @@ void tip_manager_receive(struct thorium_actor *self, struct thorium_message *mes
          *
          * The code is buggy anyway.
          */
+            /*
         REPLY(0, ACTION_START_REPLY);
         return;
+        */
 
         concrete_self->__supervisor = SOURCE(message);
+        concrete_self->origin_message = MSGID(message);
 
         /*
         UNPACK(TYPE_INT, &concrete_self->graph_manager_name);
 */
         core_int_unpack(&concrete_self->graph_manager_name, buffer);
 
-        LOG("tip manager receives ACTION_START, graph manager is %d\n",
+        LOG("tip manager receives ACTION_START (%d:%d) from %d, graph manager is %d\n",
+                        SOURCE(message), MSGID(message),
+                        SOURCE(message),
                         concrete_self->graph_manager_name);
 
         struct thorium_message new_message;
@@ -217,7 +222,9 @@ void tip_manager_callback_9(struct thorium_actor *self, struct thorium_message *
 
     UNPACK(1, TYPE_INT, concrete_self->tip_detector_manager);
 
+    /*
     LOG("Setting script");
+    */
     ASK(1, concrete_self->tip_detector_manager, ACTION_MANAGER_SET_SCRIPT,
                     tip_manager_callback_99, TYPE_INT, SCRIPT_TIP_DETECTOR);
 }
@@ -231,8 +238,14 @@ void tip_manager_callback_99(struct thorium_actor *self, struct thorium_message 
     LOG("Tell %d ACTION_START_REPLY",
                         concrete_self->__supervisor);
 
-
     TELL(0, concrete_self->tip_detector_manager, ACTION_ASK_TO_STOP);
+
+    /*
+     * Reset the parent information such that the ACTION_START_REPLY
+     * message is properly processed by the receiver.
+     */
+    thorium_actor_set_current_message_identifiers(self, concrete_self->__supervisor,
+                    concrete_self->origin_message);
 
     TELL(0, concrete_self->__supervisor,
                         ACTION_START_REPLY);
